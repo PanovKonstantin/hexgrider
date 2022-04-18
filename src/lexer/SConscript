@@ -1,0 +1,12 @@
+# -*- python -*-
+from lib2to3.pgen2 import token
+
+
+Import('env')
+Import('token_lib')
+
+lexer_lib = env.StaticLibrary('lexer', Glob('*.cpp'))
+
+tests = env.BoostTests(Glob("tests/*.cpp"), lexer_lib, [token_lib])
+
+Return('lexer_lib')

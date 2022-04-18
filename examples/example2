@@ -1,0 +1,11 @@
+hexgrid example_hexgrid = <"blue"   at [0, 0, 0],
+                           "red"    at [0, 0, 1],
+                           "blue"   at [0, 0, -1],
+                           "red"    at [0, 1, 0],
+                           "yellow" at [0, -1, 0],
+                           "red"    at [1, 0, 0],
+                           "blue"   at [-1, 0, 0]>;
+foreach int[] pos in example_hexgrid by "blue"
+{
+    if (pos[0] > 0) {remove pos from example_hexgrid;}
+}
