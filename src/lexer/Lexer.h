@@ -33,8 +33,8 @@ private:
 };
 
 static std::set<std::string> keywords = {"func", "return", "if", "elif", "else", "move", 
-                                         "foreach", "in", "add", "remove", "to", "from"};
-static std::set<std::string> alphaOperators = {"and", "or", "beside", "by", "at"};
+                                         "foreach", "in", "add", "remove", "to", "from","at"};
+static std::set<std::string> alphaOperators = {"and", "or", "beside", "by", "on"};
 static std::set<char> signs = {'<', '>', '/', '%', '*', '+', '-', '!', '=', '{', '}', '[',
                                ']', '(', ')', ',', ';'};
 static std::set<std::string> operators = {"<", ">", "/", "%", "*", "+", "-", "!", "=", "{", 

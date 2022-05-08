@@ -1,4 +1,5 @@
 #include "Lexer.h"
+#include <token/Token.h>
 #include <cctype>
 #include <math.h>
 

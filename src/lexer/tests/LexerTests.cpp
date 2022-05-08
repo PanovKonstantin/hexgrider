@@ -195,6 +195,16 @@ BOOST_AUTO_TEST_CASE(lexer_reads_sign_two_char_operator_token)
   BOOST_CHECK_EQUAL(t.getText(), "==");
 }
 
+BOOST_AUTO_TEST_CASE(lexer_reads_less_operator_token)
+{
+  std::istringstream in("<");
+  Lexer l(in);
+  l.readNextToken();
+  const auto t = l.getToken();
+  BOOST_CHECK_EQUAL(t.getType(), Token::Type::Operator);
+  BOOST_CHECK_EQUAL(t.getText(), "<");
+}
+
 // Type token
 
 BOOST_AUTO_TEST_CASE(lexer_reads_type_operator_token)

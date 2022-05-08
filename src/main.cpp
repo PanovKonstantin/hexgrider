@@ -10,11 +10,5 @@ int main()
 {
   Lexer l(std::cin);
   Token t;
-  do
-  {
-    l.readNextToken();
-    t = l.getToken();
-    std::cout << t << " ";
-  } while(t.getType() != Token::Type::EndOfFile);
   return 0;
 }

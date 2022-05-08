@@ -1,12 +1,12 @@
 # -*- python -*-
 Import('env')
 
-token_lib = env.SConscript('token/SConscript')
 lexer_lib = env.SConscript('lexer/SConscript')
+ast_lib = env.SConscript('ast/SConscript')
+parser_lib = env.SConscript('parser/SConscript')
 
 p = env.Program('hexgrider',
                 ['main.cpp'],
-                LIBS=[token_lib, lexer_lib])
-
+                LIBS=[lexer_lib, ast_lib, parser_lib])
 
 Return('p')
