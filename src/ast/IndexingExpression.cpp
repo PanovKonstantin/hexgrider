@@ -1,4 +1,4 @@
-#include "include/IndexingExpression.h"
+#include "IndexingExpression.h"
 
 #include <string>
 using namespace ast;

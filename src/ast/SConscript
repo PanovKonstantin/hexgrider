@@ -1,4 +1,4 @@
-# -*- python -*-
+ # -*- python -*-
 Import('env')
 
 ast_lib = env.StaticLibrary('ast', Glob('*.cpp'))

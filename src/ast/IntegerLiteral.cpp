@@ -1,4 +1,4 @@
-#include "include/IntegerLiteral.h"
+#include "IntegerLiteral.h"
 
 using namespace ast;
 

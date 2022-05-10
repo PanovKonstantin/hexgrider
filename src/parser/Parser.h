@@ -1,5 +1,5 @@
-#ifndef TKOM_PARSER_H
-#define TKOM_PARSER_H
+#ifndef TKOM_PARSER_H_
+#define TKOM_PARSER_H_
 
 #include <memory>
 #include <cctype>
@@ -7,37 +7,37 @@
 #include <math.h>
 #include <vector>
 #include <istream>
-#include <token/Token.h>
+#include <lexer/Token.h>
 #include <lexer/Lexer.h>
-#include <ast/include/Node.h>
-#include <ast/include/Scope.h>
-#include <ast/include/IntegerLiteral.h>
-#include <ast/include/DecimalLiteral.h>
-#include <ast/include/TextLiteral.h>
-#include <ast/include/Identifier.h>
-#include <ast/include/Array.h>
-#include <ast/include/Hexgrid.h>
-#include <ast/include/HexgridCell.h>
-#include <ast/include/IndexingExpression.h>
-#include <ast/include/LogicalNegation.h>
-#include <ast/include/ArithmeticalNegation.h>
-#include <ast/include/FOArithmExpression.h>
-#include <ast/include/SOArithmExpression.h>
-#include <ast/include/HexgridExpression.h>
-#include <ast/include/ComparisonExpression.h>
-#include <ast/include/AndExpression.h>
-#include <ast/include/OrExpression.h>
-#include <ast/include/DeclarationStatement.h>
-#include <ast/include/AssignmentStatement.h>
-#include <ast/include/FunctionCall.h>
-#include <ast/include/IfStatement.h>
-#include <ast/include/ConditionBlock.h>
-#include <ast/include/ForeachStatement.h>
-#include <ast/include/ReturnStatement.h>
-#include <ast/include/AddStatement.h>
-#include <ast/include/RemoveStatement.h>
-#include <ast/include/MoveStatement.h>
-#include <ast/include/FunctionDefinition.h>
+#include <ast/Node.h>
+#include <ast/Scope.h>
+#include "ast/IntegerLiteral.h"
+#include <ast/DecimalLiteral.h>
+#include <ast/TextLiteral.h>
+#include <ast/Identifier.h>
+#include <ast/Array.h>
+#include <ast/Hexgrid.h>
+#include <ast/HexgridCell.h>
+#include <ast/IndexingExpression.h>
+#include <ast/LogicalNegation.h>
+#include <ast/ArithmeticalNegation.h>
+#include <ast/FOArithmExpression.h>
+#include <ast/SOArithmExpression.h>
+#include <ast/HexgridExpression.h>
+#include <ast/ComparisonExpression.h>
+#include <ast/AndExpression.h>
+#include <ast/OrExpression.h>
+#include <ast/DeclarationStatement.h>
+#include <ast/AssignmentStatement.h>
+#include <ast/FunctionCall.h>
+#include <ast/IfStatement.h>
+#include <ast/ConditionBlock.h>
+#include <ast/ForeachStatement.h>
+#include <ast/ReturnStatement.h>
+#include <ast/AddStatement.h>
+#include <ast/RemoveStatement.h>
+#include <ast/MoveStatement.h>
+#include <ast/FunctionDefinition.h>
 
 
 namespace parser
@@ -114,5 +114,5 @@ public:
 };
 } // namespace parser
 
-#endif // TKOM_PARSER_H
+#endif // TKOM_PARSER_H_
 

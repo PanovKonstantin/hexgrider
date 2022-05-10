@@ -1,4 +1,4 @@
-#include "include/SOArithmExpression.h"
+#include "SOArithmExpression.h"
 
 using namespace ast;
 

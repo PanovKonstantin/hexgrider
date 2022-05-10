@@ -1,4 +1,4 @@
-#include "include/LogicalNegation.h"
+#include "LogicalNegation.h"
 
 using namespace ast;
 

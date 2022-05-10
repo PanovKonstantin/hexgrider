@@ -1,4 +1,4 @@
-#include "include/Scope.h"
+#include "Scope.h"
 #include <vector>
 #include <memory>
 using namespace ast;

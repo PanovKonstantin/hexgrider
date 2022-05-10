@@ -1,4 +1,4 @@
-#include "include/DeclarationStatement.h"
+#include "DeclarationStatement.h"
 
 using namespace ast;
 

@@ -1,4 +1,4 @@
-#include "include/TextLiteral.h"
+#include "TextLiteral.h"
 
 using namespace ast;
 

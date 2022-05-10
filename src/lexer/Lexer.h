@@ -3,7 +3,7 @@
 
 #include <istream>
 #include <set>
-#include <token/Token.h>
+#include "Token.h"
 
 namespace lexer
 {
@@ -11,7 +11,6 @@ class Lexer
 {
 public:
     Lexer(std::istream& in);
-    Lexer(const Lexer&) = delete;
     const Lexer& operator=(const Lexer&) = delete;
 
     void readNextToken();

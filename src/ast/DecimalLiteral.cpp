@@ -1,4 +1,4 @@
-#include "include/DecimalLiteral.h"
+#include "DecimalLiteral.h"
 
 using namespace ast;
 

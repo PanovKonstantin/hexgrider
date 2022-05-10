@@ -1,4 +1,4 @@
-#include "include/IfStatement.h"
+#include "IfStatement.h"
 
 using namespace ast;
 

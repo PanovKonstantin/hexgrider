@@ -1,4 +1,4 @@
-#include "include/Array.h"
+#include "Array.h"
 
 using namespace ast;
 

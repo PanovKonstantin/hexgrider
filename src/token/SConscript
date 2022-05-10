@@ -1,9 +1,0 @@
-# -*- python -*-
-Import('env')
-
-token_lib = env.StaticLibrary('token', Glob('*.cpp'))
-Export('token_lib')
-
-tests = env.BoostTests(Glob("tests/*.cpp"), token_lib)
-
-Return('token_lib')

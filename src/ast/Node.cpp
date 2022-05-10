@@ -1,4 +1,4 @@
-#include "include/Node.h"
+#include "Node.h"
 
 using namespace ast;
 

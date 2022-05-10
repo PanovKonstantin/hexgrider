@@ -1,4 +1,4 @@
-#include "include/ArithmeticalNegation.h"
+#include "ArithmeticalNegation.h"
 
 using namespace ast;
 
