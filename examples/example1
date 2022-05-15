@@ -8,7 +8,7 @@ hexgrid example_hexgrid = <"blue"   at [0, 0, 0],
 int blue_count = 0;
 foreach int[] pos in example_hexgrid beside [0, 0, 0]
 {
-    if (example_hexgrid at pos == "blue")
+    if (example_hexgrid on pos == "blue")
     {
         blue_count = blue_count + 1;
     }

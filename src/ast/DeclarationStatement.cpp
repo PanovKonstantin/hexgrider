@@ -36,6 +36,8 @@ std::string DeclarationStatement::toString(Type type_) const
         return "float";
     case Type::String:
         return "string";
+    case Type::Hexgrid:
+        return "hexgrid";
     default:
         throw std::runtime_error("Unkown comparison operator");
         return "";

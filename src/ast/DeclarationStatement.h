@@ -13,7 +13,8 @@ public:
     {
         Int,
         Float,
-        String
+        String,
+        Hexgrid
     };
     DeclarationStatement(Type type_, std::unique_ptr<Node> var_, int dimenstion_=0);
 

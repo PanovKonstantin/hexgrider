@@ -116,6 +116,8 @@ std::unique_ptr<Node> Parser::readFunctionCall(std::unique_ptr<ast::Node> func)
         args->push_back(readExpression());
         if (checkToken(Token::Type::Operator, ","))
             advance();
+        if (checkTokenType(Token::Type::EndOfFile))
+            requireToken(Token::Type::Operator, ")");
     }
     advance();
     return std::make_unique<FunctionCall>(std::move(func), std::move(args));
@@ -138,6 +140,8 @@ std::unique_ptr<Node> Parser::readDeclr()
         t = DeclarationStatement::Type::Float;
     else if(checkTokenValue("string"))
         t = DeclarationStatement::Type::String;
+    else if(checkTokenValue("hexgrid"))
+        t = DeclarationStatement::Type::Hexgrid;
     advance();
     int dimension = 0;
     while(checkToken(Token::Type::Operator, "["))
@@ -266,7 +270,11 @@ std::unique_ptr<Node> Parser::readStatementBlock()
     advance();
     auto statments = std::make_unique<std::vector<std::unique_ptr<Node>>>();
     while (!checkToken(Token::Type::Operator, "}"))
+    {
         statments->push_back(readStatement());
+        if (checkTokenType(Token::Type::EndOfFile))
+            requireToken(Token::Type::Operator, "}");
+    }
     advance();
     return std::make_unique<Scope>(std::move(statments));
 }
@@ -284,6 +292,8 @@ std::unique_ptr<Node> Parser::readFuncDef()
         params->push_back(readDeclr());
         if (checkToken(Token::Type::Operator, ","))
             advance();
+        if (checkTokenType(Token::Type::EndOfFile))
+            requireToken(Token::Type::Operator, ")");
     }
     advance();
     auto scope = readStatementBlock();
@@ -456,7 +466,6 @@ std::unique_ptr<Node> Parser::readIndexingExpression()
 
 std::unique_ptr<Node> Parser::readTerm()
 {
-    // TODO expand term list
     if (checkTokenType(Token::Type::Integer))
         return readIntegerLiteral();
     if (checkTokenType(Token::Type::Decimal))
@@ -523,6 +532,8 @@ std::unique_ptr<Node> Parser::readIdentifierOrFuncCall()
             args->push_back(readExpression());
             if (checkToken(Token::Type::Operator, ","))
                 advance();
+            if (checkTokenType(Token::Type::EndOfFile))
+                requireToken(Token::Type::Operator, ")");
         }
         advance();
         return std::make_unique<FunctionCall>(std::move(id), std::move(args));
@@ -540,6 +551,8 @@ std::unique_ptr<Node> Parser::readArray()
         elements->push_back(readExpression());
         if (checkToken(Token::Type::Operator, ","))
             advance();
+        if (checkTokenType(Token::Type::EndOfFile))
+            requireToken(Token::Type::Operator, "]");
     }
     advance();
     return std::make_unique<Array>(std::move(elements));
@@ -563,6 +576,8 @@ std::unique_ptr<Node> Parser::readHexgrid()
             advance();
         cell = std::make_unique<HexgridCell>(std::move(value), std::move(pos));
         cells->push_back(std::move(cell));
+        if (checkTokenType(Token::Type::EndOfFile))
+            requireToken(Token::Type::Operator, ">");
     }
     advance();
     return std::make_unique<Hexgrid>(std::move(cells));

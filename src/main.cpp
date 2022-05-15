@@ -9,28 +9,28 @@ using namespace token;
 using namespace parser; */
 
 using namespace lexer;
+using namespace token;
 using namespace parser;
 using namespace ast;
 
-namespace {
-  
-std::unique_ptr<Node> readAndParseStdin()
+// Commented out blocks do not work
+/* std::unique_ptr<Node> readAndParseStdin()
 {
   Parser p(std::make_unique<Lexer>(std::cin));
   return p.parse();
-}
-}
+}*/
 
 
 int main()
 {
-  std::cout << readAndParseStdin()->toString();
-/*     Token t;
+  /* std::cout << readAndParseStdin()->toString(); */
+  Lexer l(std::cin);
+  Token t;
   do
   {
     l.readNextToken();
     t = l.getToken();
     std::cout << t << " ";
-  } while(t.getType() != Token::Type::EndOfFile); */
+  } while(t.getType() != Token::Type::EndOfFile);
   return 0;
 }
