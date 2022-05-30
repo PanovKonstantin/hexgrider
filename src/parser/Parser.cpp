@@ -596,25 +596,25 @@ bool Parser::isComparisonOperator()
 
 void Parser::throwOnUnexpectedInput(std::string expected)
 {
-    throw std::runtime_error("Unexpected token: " + lexer->getToken().toString()
+    throw std::runtime_error("Unexpected token: " + current_token.toString()
                            + ", expecting: " + expected);
 }
 
 void Parser::throwOnUnexpectedInput(Token::Type expected)
 {
-    throw std::runtime_error("Unexpected token: " + lexer->getToken().toString()
+    throw std::runtime_error("Unexpected token: " + current_token.toString()
                            + ", expecting: " + Token::toString(expected));
 }
 
 void Parser::throwOnUnexpectedInput(token::Token t)
 {
-    throw std::runtime_error("Unexpected token: " + lexer->getToken().toString()
+    throw std::runtime_error("Unexpected token: " + current_token.toString()
                            + ", expecting: " + t.toString());
 }
 
 Token Parser::requireToken(Token::Type expected_type)
 {
-    const auto token = lexer->getToken();
+    const auto token = current_token;
     const auto type = token.getType();
     if (type != expected_type)
         throwOnUnexpectedInput(expected_type);
@@ -623,7 +623,7 @@ Token Parser::requireToken(Token::Type expected_type)
 
 Token Parser::requireToken(Token::Type expected_type, std::string expected_value)
 {
-    const auto token = lexer->getToken();
+    const auto token = current_token;
     const auto type = token.getType();
     const auto value = token.getText();
     if (type != expected_type || value != expected_value)
@@ -633,7 +633,7 @@ Token Parser::requireToken(Token::Type expected_type, std::string expected_value
 
 Token Parser::requireToken(Token::Type expected_type, int expected_value)
 {
-    const auto token = lexer->getToken();
+    const auto token = current_token;
     const auto type = token.getType();
     const auto value = token.getInteger();
     if (type != expected_type || value != expected_value)
@@ -643,7 +643,7 @@ Token Parser::requireToken(Token::Type expected_type, int expected_value)
 
 Token Parser::requireToken(Token::Type expected_type, double expected_value)
 {
-    const auto token = lexer->getToken();
+    const auto token = current_token;
     const auto type = token.getType();
     const auto value = token.getDecimal();
     if (type != expected_type || value != expected_value)
@@ -653,22 +653,22 @@ Token Parser::requireToken(Token::Type expected_type, double expected_value)
 
 bool Parser::checkTokenType(Token::Type expected) const
 {
-    return lexer->getToken().getType() == expected;
+    return current_token.getType() == expected;
 }
 
 bool Parser::checkTokenValue(std::string expected) const
 {
-    return lexer->getToken().getText() == expected;
+    return current_token.getText() == expected;
 }
 
 bool Parser::checkTokenValue(int expected) const
 {
-    return lexer->getToken().getInteger() == expected;
+    return current_token.getInteger() == expected;
 }
 
 bool Parser::checkTokenValue(double expected) const
 {
-    return lexer->getToken().getDecimal() == expected;
+    return current_token.getDecimal() == expected;
 }
 
 bool Parser::checkToken(Token::Type type, std::string value) const
@@ -688,5 +688,5 @@ bool Parser::checkToken(Token::Type type, double value) const
 
 void Parser::advance()
 {
-    lexer->readNextToken();
+    current_token = lexer->getToken();
 }

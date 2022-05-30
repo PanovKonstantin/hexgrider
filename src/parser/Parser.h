@@ -111,6 +111,7 @@ public:
     void advance();
 
     std::unique_ptr<lexer::Lexer> lexer;
+    token::Token current_token;
 };
 } // namespace parser
 

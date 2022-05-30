@@ -3,6 +3,7 @@
 
 #include <istream>
 #include <set>
+#include <optional>
 #include "Token.h"
 
 namespace lexer
@@ -13,34 +14,29 @@ public:
     Lexer(std::istream& in);
     const Lexer& operator=(const Lexer&) = delete;
 
-    void readNextToken();
-    token::Token getToken() const;
+    token::Token getToken();
 
 private:
-    bool tryEof();
-    bool tryNumber();
-    bool tryInQuotes();
-    bool tryAlphaNumeric();
-    bool trySigns();
+    std::optional<token::Token> tryEof();
+    std::optional<token::Token> tryNumber();
+    std::optional<token::Token> tryInQuotes();
+    std::optional<token::Token> tryAlphaNumeric();
+    std::optional<token::Token>  trySigns();
+
+    int parseInteger();
+    double parseFraction();
 
     void ignoreWhitespaces();
     void throwUnknownToken();
     void throwIfStreamError();
+    void throwOverflowInteger();
+    void throwOverflowFraction();
+    void throwUnknownOperator(std::string op);
 
+    bool isIntegerOverflow(int integer);
     std::istream& in;
     token::Token curr_token;
 };
-
-static std::set<std::string> keywords = {"func", "return", "if", "elif", "else", "move", 
-                                         "foreach", "in", "add", "remove", "to", "from","at"};
-static std::set<std::string> alphaOperators = {"and", "or", "beside", "by", "on"};
-static std::set<char> signs = {'<', '>', '/', '%', '*', '+', '-', '!', '=', '{', '}', '[',
-                               ']', '(', ')', ',', ';'};
-static std::set<std::string> operators = {"<", ">", "/", "%", "*", "+", "-", "!", "=", "{", 
-                                         "}", "[", "]", "(", ")","==", "!=", ">=", "<=",
-                                         ",", ";"};
-static std::set<std::string> types = {"int", "float", "string", "hexgrid"};
-
 } // namespace lexer
 
 #endif // TKOM_LEXER_H

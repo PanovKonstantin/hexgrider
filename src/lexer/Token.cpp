@@ -4,6 +4,7 @@ using namespace token;
 
 
 Token::Token():type(Type::EndOfFile) {}
+Token::Token(Type t):type(t) {}
 Token::Token(Type t, int v):type(t), value(v)
 {
     switch (t)

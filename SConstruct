@@ -12,7 +12,7 @@ def create_options():
 
 def fill_gcc_env_flags(env):
     env.Append(CCFLAGS=['-Wall', '-Wextra', '-Wpedantic', '-Werror'])
-    env.Append(CCFLAGS=['--std=c++14'])
+    env.Append(CCFLAGS=['--std=c++17'])
 
     if env['debug']:
         env.Append(CCFLAGS=['-O0', '-g'])
@@ -21,6 +21,7 @@ def fill_gcc_env_flags(env):
 
 def fill_cl_env_flags(env):
     env.Append(CCFLAGS=['/W4', '/WX', '/EHsc'])
+    env.Append(CCFLAGS=['--std=c++17'])
     env.Append(LINKFLAGS=['/SUBSYSTEM:CONSOLE'])
 
     if env['debug']:
