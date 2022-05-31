@@ -34,7 +34,6 @@ def fill_env_flags(env):
     env.Append(CPPPATH=['#/src'])
     env.Append(CPPPATH=['/usr/local/include']) # TODO configurable
     env.Append(LIBPATH=['/usr/local/lib']) # TODO configurable
-    env.Append(LIBPATH=['/home/panov/llvm-project'])
 
     if env['CC'] == 'cl':
         fill_cl_env_flags(env)

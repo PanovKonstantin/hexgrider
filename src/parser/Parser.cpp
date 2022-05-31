@@ -1,5 +1,33 @@
 #include "Parser.h"
-#include <ast/Ast.h>
+#include <ast/Node.h>
+#include <ast/Scope.h>
+#include "ast/IntegerLiteral.h"
+#include <ast/DecimalLiteral.h>
+#include <ast/TextLiteral.h>
+#include <ast/Identifier.h>
+#include <ast/Array.h>
+#include <ast/Hexgrid.h>
+#include <ast/HexgridCell.h>
+#include <ast/IndexingExpression.h>
+#include <ast/LogicalNegation.h>
+#include <ast/ArithmeticalNegation.h>
+#include <ast/FOArithmExpression.h>
+#include <ast/SOArithmExpression.h>
+#include <ast/HexgridExpression.h>
+#include <ast/ComparisonExpression.h>
+#include <ast/AndExpression.h>
+#include <ast/OrExpression.h>
+#include <ast/DeclarationStatement.h>
+#include <ast/AssignmentStatement.h>
+#include <ast/FunctionCall.h>
+#include <ast/IfStatement.h>
+#include <ast/ConditionBlock.h>
+#include <ast/ForeachStatement.h>
+#include <ast/ReturnStatement.h>
+#include <ast/AddStatement.h>
+#include <ast/RemoveStatement.h>
+#include <ast/MoveStatement.h>
+#include <ast/FunctionDefinition.h>
 using namespace parser;
 using namespace lexer;
 using namespace token;
