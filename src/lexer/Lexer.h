@@ -33,7 +33,7 @@ private:
     void throwOverflowFraction();
     void throwUnknownOperator(std::string op);
 
-    bool isIntegerOverflow(int integer);
+    bool isIntegerOverflow(int integer, int increase);
     std::istream& in;
     token::Token curr_token;
 };

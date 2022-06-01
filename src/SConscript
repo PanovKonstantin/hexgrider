@@ -5,8 +5,12 @@ ast_lib = env.SConscript('ast/SConscript')
 lexer_lib = env.SConscript('lexer/SConscript')
 parser_lib = env.SConscript('parser/SConscript')
 
+o = env.Object('hexgrider.o',
+                ['main.cpp'])
+
+# p = env.Program()
 p = env.Program('hexgrider',
-                ['main.cpp'],
+                [o],
                 LIBS=[
                       ast_lib,
                       lexer_lib, 

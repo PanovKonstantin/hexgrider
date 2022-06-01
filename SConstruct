@@ -21,7 +21,6 @@ def fill_gcc_env_flags(env):
 
 def fill_cl_env_flags(env):
     env.Append(CCFLAGS=['/W4', '/WX', '/EHsc'])
-    env.Append(CCFLAGS=['--std=c++17'])
     env.Append(LINKFLAGS=['/SUBSYSTEM:CONSOLE'])
 
     if env['debug']:
@@ -34,7 +33,6 @@ def fill_env_flags(env):
     env.Append(CPPPATH=['#/src'])
     env.Append(CPPPATH=['/usr/local/include']) # TODO configurable
     env.Append(LIBPATH=['/usr/local/lib']) # TODO configurable
-    env.Append(LIBPATH=['/home/panov/llvm-project'])
 
     if env['CC'] == 'cl':
         fill_cl_env_flags(env)
@@ -64,9 +62,32 @@ def add_special_methods(env):
     env.AddMethod(build_and_run_test, "BoostTests")
 
 def create_env(opts):
-    env = Environment(variables = opts)
+    env = Environment(variables = opts, CXX='clang++')
     Export('env')
-    fill_env_flags(env)
+    # fill_env_flags(env)
+    env.Append(CPPPATH=['#/src'])
+    env.Append(CPPPATH=['/usr/local/include']) # TODO configurable
+    env.Append(LIBPATH=['/usr/local/lib']) # TODO configurable
+    # env.Append(CCFLAGS=['-Wall', '-Wextra', '-Wpedantic', '-Werror'])
+    # env.Append(CXXFLAGS=['`llvm-config --cxxflags`'])
+    # env.Append(CXXFLAGS=['`llvm-config --ldflags`'])
+    env.Append(CXXFLAGS=['-I/usr/lib/llvm-10/include'])
+    env.Append(CXXFLAGS=['-std=c++17'])
+    # env.Append(CCFLAGS=['-fno-exceptions'])
+    env.Append(CXXFLAGS=['-DLLVM_DISABLE_ABI_BREAKING_CHECKS_ENFORCING'])
+    env.Append(CXXFLAGS=['-D_GNU_SOURCE'])
+    env.Append(CXXFLAGS=['-D__STDC_CONSTANT_MACROS'])
+    env.Append(CXXFLAGS=['-D__STDC_FORMAT_MACROS'])
+    env.Append(CXXFLAGS=['-D__STDC_LIMIT_MACROS'])
+    env.Append(CCFLAGS=['-stdlib=libstdc++'])
+    env.Append(LINKFLAGS=['-L/usr/lib/llvm-10/lib '])
+    if env['debug']:
+        env.Append(CCFLAGS=['-O0', '-g'])
+    else:
+        env.Append(CCFLAGS=['-O2'])
+
+
+
     add_special_methods(env)
     return env
 

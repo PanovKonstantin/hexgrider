@@ -54,6 +54,15 @@ BOOST_AUTO_TEST_CASE(lexer_catches_integer_overflow)
   BOOST_CHECK_THROW(l.getToken(), std::runtime_error);
 }
 
+BOOST_AUTO_TEST_CASE(lexer_parses_very_big_int)
+{
+  std::istringstream in("2147483647");
+  Lexer l(in);
+  const auto t = l.getToken();
+  BOOST_CHECK_EQUAL(t.getType(), Token::Type::Integer);
+  BOOST_CHECK_EQUAL(t.getInteger(), 2147483647);
+}
+
 // Decimal token
 
 BOOST_AUTO_TEST_CASE(lexer_reads_dec_token)

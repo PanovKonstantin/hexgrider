@@ -1,5 +1,17 @@
 #include "Ast.h"
+#include "llvm/ADT/APFloat.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/IR/BasicBlock.h"
+#include "llvm/IR/Constants.h"
+#include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/Function.h"
+#include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Module.h"
+#include "llvm/IR/Type.h"
+#include "llvm/IR/Verifier.h"
 using namespace ast;
+using namespace std;
 
 AddStatement::AddStatement(
                 std::unique_ptr<Node> being_added_,
@@ -129,6 +141,10 @@ DecimalLiteral::DecimalLiteral(double value_)
 std::string DecimalLiteral::toString(int depth) const
 {
     return prefix(depth) + "Decimal Literal (" + std::to_string(value) + ")\n";
+}
+
+double DecimalLiteral::getValue() const {
+    return value;
 }
 
 DeclarationStatement::DeclarationStatement(Type type_, 
@@ -499,4 +515,49 @@ TextLiteral::TextLiteral(std::string value_): value(value_){}
 std::string TextLiteral::toString(int depth) const
 {
     return prefix(depth) + "Text Literal (" + value + ")\n";
+}
+void AssignmentStatement::accept(AstVisitor &visitor) const {};
+void AddStatement::accept(AstVisitor &visitor) const {};
+void ConditionBlock::accept(AstVisitor &visitor) const {};
+void DeclarationStatement::accept(AstVisitor &visitor) const {};
+void ForeachStatement::accept(AstVisitor &visitor) const {};
+void FunctionCall::accept(AstVisitor &visitor) const {};
+void FunctionDefinition::accept(AstVisitor &visitor) const {};
+void IfStatement::accept(AstVisitor &visitor) const {};
+void MoveStatement::accept(AstVisitor &visitor) const {};
+void RemoveStatement::accept(AstVisitor &visitor) const {};
+void ReturnStatement::accept(AstVisitor &visitor) const {};
+void Scope::accept(AstVisitor &visitor) const {};
+void OrExpression::accept(AstVisitor &visitor) const {};
+void AndExpression::accept(AstVisitor &visitor) const {};
+void ComparisonExpression::accept(AstVisitor &visitor) const {};
+void HexgridExpression::accept(AstVisitor &visitor) const {};
+void SOArithmExpression::accept(AstVisitor &visitor) const {};
+void FOArithmExpression::accept(AstVisitor &visitor) const {};
+void LogicalNegation::accept(AstVisitor &visitor) const {};
+void ArithmeticalNegation::accept(AstVisitor &visitor) const {};
+void IndexingExpression::accept(AstVisitor &visitor) const {};
+void Literal::accept(AstVisitor &visitor) const {};
+void TextLiteral::accept(AstVisitor &visitor) const {};
+void IntegerLiteral::accept(AstVisitor &visitor) const {};
+void DecimalLiteral::accept(AstVisitor &visitor) const {};
+void Hexgrid::accept(AstVisitor &visitor) const {};
+void HexgridCell::accept(AstVisitor &visitor) const {};
+void Identifier::accept(AstVisitor &visitor) const {};
+void Array::accept(AstVisitor &visitor) const {};
+
+
+CodeGenVisitor::CodeGenVisitor(llvm::LLVMContext &context)
+:TheContext(context){
+    TheModule = make_unique<llvm::Module>("hexgrider", TheContext);
+    Builder = std::make_unique<llvm::IRBuilder<>>(TheContext);
+}
+
+llvm::Value* CodeGenVisitor::LogErrorV(const char *Str) {
+    throw runtime_error(Str);
+    return nullptr;
+}
+
+llvm::Value* CodeGenVisitor::getValue(const DecimalLiteral &dl){
+    return llvm::ConstantFP::get(TheContext, llvm::APFloat(dl.getValue()));
 }

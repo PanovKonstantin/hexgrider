@@ -61,10 +61,12 @@ std::optional<token::Token> Lexer::tryNumber()
 
 int Lexer::parseInteger(){
     int integer = 0;
+    int increase = 0;
     while(std::isdigit(in.peek())){
-        if(isIntegerOverflow(integer))
+        increase = in.get() - '0';
+        if(isIntegerOverflow(integer, increase))
             throwOverflowInteger();
-        integer = integer * 10 + in.get() - '0';
+        integer = integer * 10 + increase;
     }
     return integer;
 }
@@ -72,11 +74,13 @@ int Lexer::parseInteger(){
 double Lexer::parseFraction(){
     int fraction = 0;
     int decimal_places = 0;
+    int increase = 0;
     while (std::isdigit(in.peek()))
     {
-        if(isIntegerOverflow(fraction))
+        increase = in.get() - '0';
+        if(isIntegerOverflow(fraction, increase))
             throwOverflowFraction();
-        fraction = fraction * 10 + in.get() - '0';
+        fraction = fraction * 10 + increase;
         decimal_places++;
     }
     return fraction / std::pow(10, decimal_places);
@@ -191,9 +195,9 @@ void Lexer::throwUnknownOperator(std::string op)
 }
 
 
-bool Lexer::isIntegerOverflow(int value)
+bool Lexer::isIntegerOverflow(int value, int increase)
 {
-    return  (   value >= 214748364 
-                && (in.peek() == '9' || in.peek() == '8')) 
-            || value >= 2147483647;
+    if (value >= 214748368) return true;
+    if (2147483647-increase<value*10) return true;
+    return false;
 }
