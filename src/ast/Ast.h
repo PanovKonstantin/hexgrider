@@ -472,6 +472,8 @@ public:
     void accept(AstVisitor &visitor) const override;
 
     std::string toString(int depth = 0) const override;
+    std::string getValue() const;
+private:
     std::string value;
 };
 
@@ -492,6 +494,9 @@ class AstVisitor
 {
 public:
     virtual ~AstVisitor() = default;
+
+    virtual llvm::Function* operator()(const Scope &sc) = 0;
+
     // virtual void operator()(const class AssignmentStatement &) = 0;
     // virtual void operator()(const class AddStatement &) = 0;
     // virtual void operator()(const class ConditionBlock &) = 0;
@@ -503,7 +508,6 @@ public:
     // virtual void operator()(const class MoveStatement &) = 0;
     // virtual void operator()(const class RemoveStatement &) = 0;
     // virtual void operator()(const class ReturnStatement &) = 0;
-    // virtual void operator()(const class Scope &) = 0;
     // virtual void operator()(const class OrExpression &) = 0;
     // virtual void operator()(const class AndExpression &) = 0;
     // virtual void operator()(const class ComparisonExpression &) = 0;
@@ -518,7 +522,7 @@ public:
     // virtual void operator()(const class IntegerLiteral &) = 0;
     
     virtual llvm::Value *getValue(const DecimalLiteral &dl) = 0;
-    virtual llvm::Value *getValue(const DecimalLiteral &dl) = 0;
+    virtual llvm::Value *getValue(const Identifier &dl) = 0;
     // virtual void operator()(const class DecimalLiteral &) = 0;
 
     // virtual void operator()(const class Hexgrid &) = 0;
@@ -530,11 +534,15 @@ public:
 class CodeGenVisitor : public AstVisitor {
     public:
     CodeGenVisitor(llvm::LLVMContext &context);
+
+    llvm::Function* operator()(const Scope &sc) override;
     llvm::Value *getValue(const DecimalLiteral &dl) override;
+    llvm::Value *getValue(const Identifier &id) override;
     
     // llvm::Value *getVa
 
-    llvm::Value *LogErrorV(const char *Str);    
+    llvm::Value *LogErrorV(const char *Str);
+    void print();
     private:
     llvm::LLVMContext &TheContext;
     std::unique_ptr<llvm::Module> TheModule;

@@ -1,18 +1,19 @@
 #include "Ast.h"
 using namespace ast;
 using namespace std;
+using namespace llvm;
 
 AddStatement::AddStatement(
-                std::unique_ptr<Node> being_added_,
-                std::unique_ptr<Node> added_to_,
-                std::unique_ptr<Node> added_at_)
+                unique_ptr<Node> being_added_,
+                unique_ptr<Node> added_to_,
+                unique_ptr<Node> added_at_)
 {
-    being_added = std::move(being_added_);
-    added_to = std::move(added_to_);
-    added_at = std::move(added_at_);
+    being_added = move(being_added_);
+    added_to = move(added_to_);
+    added_at = move(added_at_);
 }
 
-std::string AddStatement::toString(int depth) const
+string AddStatement::toString(int depth) const
 {
     return prefix(depth) + "Add Statement\n" + 
             being_added->toString(depth + 1) + 
@@ -20,39 +21,39 @@ std::string AddStatement::toString(int depth) const
             added_at->toString(depth + 1);
 }
 
-AndExpression::AndExpression(std::unique_ptr<Node> lvalue_,
-                             std::unique_ptr<Node> rvalue_)
+AndExpression::AndExpression(unique_ptr<Node> lvalue_,
+                             unique_ptr<Node> rvalue_)
 {
-    lvalue = std::move(lvalue_);
-    rvalue = std::move(rvalue_);
+    lvalue = move(lvalue_);
+    rvalue = move(rvalue_);
 }
 
-std::string AndExpression::toString(int depth) const
+string AndExpression::toString(int depth) const
 {
     return prefix(depth) + "And Expression\n" +
             lvalue->toString(depth + 1) +
             rvalue->toString(depth + 1);
 }
 
-ArithmeticalNegation::ArithmeticalNegation(std::unique_ptr<Node>  value_)
+ArithmeticalNegation::ArithmeticalNegation(unique_ptr<Node>  value_)
 {
-    value = std::move(value_);
+    value = move(value_);
 }
 
-std::string ArithmeticalNegation::toString(int depth) const
+string ArithmeticalNegation::toString(int depth) const
 {
     return prefix(depth) + "Arithmetical Negation Expression\n" + value->toString(depth + 1);
 }
 
-Array::Array(std::unique_ptr<std::vector<std::unique_ptr<Node>>> elements_)
+Array::Array(unique_ptr<vector<unique_ptr<Node>>> elements_)
 {
-    elements = std::move(elements_);
+    elements = move(elements_);
 }
 
-std::string Array::toString(int depth) const
+string Array::toString(int depth) const
 {
-    std::string ret_str = prefix(depth) + "Array of length (" + 
-                          std::to_string(elements->size()) + ")\n";
+    string ret_str = prefix(depth) + "Array of length (" + 
+                          to_string(elements->size()) + ")\n";
     for(auto const& element: *elements)
     {
         ret_str += element->toString(depth + 1);
@@ -60,14 +61,14 @@ std::string Array::toString(int depth) const
     return ret_str;
 }
 
-AssignmentStatement::AssignmentStatement(std::unique_ptr<Node> target_, 
-                                         std::unique_ptr<Node> value_)
+AssignmentStatement::AssignmentStatement(unique_ptr<Node> target_, 
+                                         unique_ptr<Node> value_)
 {
-    target = std::move(target_);
-    value = std::move(value_);
+    target = move(target_);
+    value = move(value_);
 }
 
-std::string AssignmentStatement::toString(int depth) const
+string AssignmentStatement::toString(int depth) const
 {
     return prefix(depth) + "Assignment\n" + 
            target->toString(depth+1) + 
@@ -75,23 +76,23 @@ std::string AssignmentStatement::toString(int depth) const
            
 }
 
-ComparisonExpression::ComparisonExpression(std::unique_ptr<Node> lvalue_,
+ComparisonExpression::ComparisonExpression(unique_ptr<Node> lvalue_,
                                        Operator op_,
-                                       std::unique_ptr<Node> rvalue_)
+                                       unique_ptr<Node> rvalue_)
     : op(op_)
 {
-    lvalue = std::move(lvalue_);
-    rvalue = std::move(rvalue_);
+    lvalue = move(lvalue_);
+    rvalue = move(rvalue_);
 }
 
-std::string ComparisonExpression::toString(int depth) const
+string ComparisonExpression::toString(int depth) const
 {
     return prefix(depth) + toString(op) +
             lvalue->toString(depth + 1) +
             rvalue->toString(depth + 1);
 }
 
-std::string ComparisonExpression::toString(Operator op_) const
+string ComparisonExpression::toString(Operator op_) const
 {
     switch (op_)
     {
@@ -102,19 +103,19 @@ std::string ComparisonExpression::toString(Operator op_) const
     case Operator::Equal:           return "Equal Expression\n";
     case Operator::NotEqual:        return "NotEqual Expression\n";
     default:
-        throw std::runtime_error("Unkown comparison operator");
+        throw runtime_error("Unkown comparison operator");
         return "";
     }
 }
 
-ConditionBlock::ConditionBlock(std::unique_ptr<Node> condition_,
-                 std::unique_ptr<Node> scope_)
+ConditionBlock::ConditionBlock(unique_ptr<Node> condition_,
+                 unique_ptr<Node> scope_)
 {
-    condition = std::move(condition_);
-    scope = std::move(scope_);
+    condition = move(condition_);
+    scope = move(scope_);
 }
 
-std::string ConditionBlock::toString(int depth) const
+string ConditionBlock::toString(int depth) const
 {
     return prefix(depth) + "Condition Block\n" + 
             condition->toString(depth + 1) + 
@@ -127,9 +128,9 @@ DecimalLiteral::DecimalLiteral(double value_)
     
 }
 
-std::string DecimalLiteral::toString(int depth) const
+string DecimalLiteral::toString(int depth) const
 {
-    return prefix(depth) + "Decimal Literal (" + std::to_string(value) + ")\n";
+    return prefix(depth) + "Decimal Literal (" + to_string(value) + ")\n";
 }
 
 double DecimalLiteral::getValue() const {
@@ -137,30 +138,30 @@ double DecimalLiteral::getValue() const {
 }
 
 DeclarationStatement::DeclarationStatement(Type type_, 
-                                            std::unique_ptr<Node> var_,
+                                            unique_ptr<Node> var_,
                                             int dimenstion_)
 {
     type = type_;
-    var = std::move(var_);
+    var = move(var_);
     dimenstion=dimenstion_;
 }
 
-std::string DeclarationStatement::toString(int depth) const
+string DeclarationStatement::toString(int depth) const
 {
     return prefix(depth) + "Declaration\n" + 
            prefix(depth + 1) + "Variable Type (" + getType() + ")\n" +
            var->toString(depth+1);
 }
 
-std::string DeclarationStatement::getType() const
+string DeclarationStatement::getType() const
 {
     if (dimenstion > 0)
-        return std::to_string(dimenstion) + "d array of type " + toString(type);
+        return to_string(dimenstion) + "d array of type " + toString(type);
     else
         return toString(type);
 }
 
-std::string DeclarationStatement::toString(Type type_) const
+string DeclarationStatement::toString(Type type_) const
 {
     switch (type_)
     {
@@ -173,21 +174,21 @@ std::string DeclarationStatement::toString(Type type_) const
     case Type::Hexgrid:
         return "hexgrid";
     default:
-        throw std::runtime_error("Unkown comparison operator");
+        throw runtime_error("Unkown comparison operator");
         return "";
     }
 }
 
-FOArithmExpression::FOArithmExpression(std::unique_ptr<Node> lvalue_,
+FOArithmExpression::FOArithmExpression(unique_ptr<Node> lvalue_,
                                        Operator op_,
-                                       std::unique_ptr<Node> rvalue_)
+                                       unique_ptr<Node> rvalue_)
     : op(op_)
 {
-    lvalue = std::move(lvalue_);
-    rvalue = std::move(rvalue_);
+    lvalue = move(lvalue_);
+    rvalue = move(rvalue_);
 }
 
-std::string FOArithmExpression::toString(int depth) const
+string FOArithmExpression::toString(int depth) const
 {
     switch (op)
     {
@@ -200,22 +201,22 @@ std::string FOArithmExpression::toString(int depth) const
                lvalue->toString(depth + 1) +
                rvalue->toString(depth + 1);
     default:
-        throw std::runtime_error("Arithmetical Expression without operator");
+        throw runtime_error("Arithmetical Expression without operator");
         return "";
     };
 }
 
 ForeachStatement::ForeachStatement(
-                std::unique_ptr<Node> iterator_,
-                std::unique_ptr<Node> iterated_,
-                std::unique_ptr<Node> scope_)
+                unique_ptr<Node> iterator_,
+                unique_ptr<Node> iterated_,
+                unique_ptr<Node> scope_)
 {
-    iterator = std::move(iterator_);
-    iterated = std::move(iterated_);
-    scope = std::move(scope_);
+    iterator = move(iterator_);
+    iterated = move(iterated_);
+    scope = move(scope_);
 }
 
-std::string ForeachStatement::toString(int depth) const
+string ForeachStatement::toString(int depth) const
 {
     return prefix(depth) + "Foreach Statement\n" + 
             iterator->toString(depth + 1) + 
@@ -223,14 +224,14 @@ std::string ForeachStatement::toString(int depth) const
             scope->toString(depth + 1);
 }
 
-FunctionCall::FunctionCall(std::unique_ptr<Node> func_, 
-                           std::unique_ptr<std::vector<std::unique_ptr<ast::Node>>> args_)
+FunctionCall::FunctionCall(unique_ptr<Node> func_, 
+                           unique_ptr<vector<unique_ptr<Node>>> args_)
 {
-    func = std::move(func_);
-    args = std::move(args_);
+    func = move(func_);
+    args = move(args_);
 }
 
-std::string FunctionCall::toString(int depth) const
+string FunctionCall::toString(int depth) const
 {
     auto ret_str =  prefix(depth) + "Function Call\n" + 
                     func->toString(depth+1);
@@ -242,18 +243,18 @@ std::string FunctionCall::toString(int depth) const
            
 }
 
-FunctionDefinition::FunctionDefinition(std::unique_ptr<Node> fun_,
-                         std::unique_ptr<std::vector<std::unique_ptr<ast::Node>>> params_,
-                         std::unique_ptr<Node> scope_)
+FunctionDefinition::FunctionDefinition(unique_ptr<Node> fun_,
+                         unique_ptr<vector<unique_ptr<Node>>> params_,
+                         unique_ptr<Node> scope_)
 {
-    fun = std::move(fun_);
-    params = std::move(params_);
-    scope = std::move(scope_);
+    fun = move(fun_);
+    params = move(params_);
+    scope = move(scope_);
 }
 
-std::string FunctionDefinition::toString(int depth) const
+string FunctionDefinition::toString(int depth) const
 {
-    std::string ret_str = prefix(depth) + "Function Defenition\n" + 
+    string ret_str = prefix(depth) + "Function Defenition\n" + 
                           fun->toString(depth + 1);
     for(auto const& param: *params)
         ret_str += param->toString(depth + 1);
@@ -261,14 +262,14 @@ std::string FunctionDefinition::toString(int depth) const
     return ret_str;
 }
 
-Hexgrid::Hexgrid(std::unique_ptr<std::vector<std::unique_ptr<ast::Node>>> cells_)
+Hexgrid::Hexgrid(unique_ptr<vector<unique_ptr<Node>>> cells_)
 {
-    cells = std::move(cells_);
+    cells = move(cells_);
 }
 
-std::string Hexgrid::toString(int depth) const
+string Hexgrid::toString(int depth) const
 {
-    std::string ret_str = prefix(depth) + "Hexgrid\n";
+    string ret_str = prefix(depth) + "Hexgrid\n";
     for(auto const& cell: *cells)
     {
         ret_str += cell->toString(depth + 1);
@@ -276,29 +277,29 @@ std::string Hexgrid::toString(int depth) const
     return ret_str;
 }
 
-HexgridCell::HexgridCell(std::unique_ptr<Node> value_, std::unique_ptr<Node> pos_)
+HexgridCell::HexgridCell(unique_ptr<Node> value_, unique_ptr<Node> pos_)
 {
-    pos = std::move(pos_);
-    value = std::move(value_);
+    pos = move(pos_);
+    value = move(value_);
 }
 
-std::string HexgridCell::toString(int depth) const
+string HexgridCell::toString(int depth) const
 {
     return prefix(depth) + "Hexgrid Cell\n" +
            value->toString(depth + 1) + 
            pos->toString(depth + 1);
 }
 
-HexgridExpression::HexgridExpression(std::unique_ptr<Node> lvalue_,
+HexgridExpression::HexgridExpression(unique_ptr<Node> lvalue_,
                                        Operator op_,
-                                       std::unique_ptr<Node> rvalue_)
+                                       unique_ptr<Node> rvalue_)
     : op(op_)
 {
-    lvalue = std::move(lvalue_);
-    rvalue = std::move(rvalue_);
+    lvalue = move(lvalue_);
+    rvalue = move(rvalue_);
 }
 
-std::string HexgridExpression::toString(int depth) const
+string HexgridExpression::toString(int depth) const
 {
     switch (op)
     {
@@ -315,33 +316,35 @@ std::string HexgridExpression::toString(int depth) const
                lvalue->toString(depth + 1) +
                rvalue->toString(depth + 1);
     default:
-        throw std::runtime_error("Hexgrid Expression without operator");
+        throw runtime_error("Hexgrid Expression without operator");
         return "";
     };
 }
 
-Identifier::Identifier(std::string value_)
+Identifier::Identifier(string value_)
     : value(value_)
 {
 }
-
-std::string Identifier::toString(int depth) const
+string Identifier::getValue() const {
+    return value;
+}
+string Identifier::toString(int depth) const
 {
     return prefix(depth) + "Identifier (" + value + ")\n";
 }
 
-IfStatement::IfStatement(std::unique_ptr<Node> if_block_,
-                         std::unique_ptr<std::vector<std::unique_ptr<ast::Node>>> elif_blocks_,
-                         std::unique_ptr<Node> else_block_)
+IfStatement::IfStatement(unique_ptr<Node> if_block_,
+                         unique_ptr<vector<unique_ptr<Node>>> elif_blocks_,
+                         unique_ptr<Node> else_block_)
 {
-    if_block = std::move(if_block_);
-    else_block = std::move(else_block_);
-    elif_blocks = std::move(elif_blocks_);
+    if_block = move(if_block_);
+    else_block = move(else_block_);
+    elif_blocks = move(elif_blocks_);
 }
 
-std::string IfStatement::toString(int depth) const
+string IfStatement::toString(int depth) const
 {
-    std::string ret_str = prefix(depth) + "If Statement\n" + 
+    string ret_str = prefix(depth) + "If Statement\n" + 
                           if_block->toString(depth + 1);
     if (elif_blocks)
         for(auto const& elif_block: *elif_blocks)
@@ -351,14 +354,14 @@ std::string IfStatement::toString(int depth) const
     return ret_str;
 }
 
-IndexingExpression::IndexingExpression(std::unique_ptr<Node> indexOn_,
-                                       std::unique_ptr<Node> indexBy_)
+IndexingExpression::IndexingExpression(unique_ptr<Node> indexOn_,
+                                       unique_ptr<Node> indexBy_)
 {
-    indexOn = std::move(indexOn_);
-    indexBy = std::move(indexBy_);
+    indexOn = move(indexOn_);
+    indexBy = move(indexBy_);
 }
 
-std::string IndexingExpression::toString(int depth) const
+string IndexingExpression::toString(int depth) const
 {
     return prefix(depth) + "Indexing Expression\n" + 
            indexOn->toString(depth + 1) + 
@@ -371,42 +374,42 @@ IntegerLiteral::IntegerLiteral(int value_)
     
 }
 
-std::string IntegerLiteral::toString(int depth) const
+string IntegerLiteral::toString(int depth) const
 {
-    return prefix(depth) + "Integer Literal (" + std::to_string(value) + ")\n";
+    return prefix(depth) + "Integer Literal (" + to_string(value) + ")\n";
 }
 
 Literal::Literal()
 {
 }
 
-std::string Literal::toString(int depth) const
+string Literal::toString(int depth) const
 {
     return prefix(depth) + "Blank literal\n";
 }
 
-LogicalNegation::LogicalNegation(std::unique_ptr<Node>  value_)
+LogicalNegation::LogicalNegation(unique_ptr<Node>  value_)
 {
-    value = std::move(value_);
+    value = move(value_);
 }
 
-std::string LogicalNegation::toString(int depth) const
+string LogicalNegation::toString(int depth) const
 {
     return prefix(depth) + "Logical Negation Expression\n" + value->toString(depth + 1);
 }
 
-MoveStatement::MoveStatement(std::unique_ptr<Node> position_source_,
-                             std::unique_ptr<Node> grid_source_,
-                             std::unique_ptr<Node> grid_target_,
-                             std::unique_ptr<Node> position_target_)
+MoveStatement::MoveStatement(unique_ptr<Node> position_source_,
+                             unique_ptr<Node> grid_source_,
+                             unique_ptr<Node> grid_target_,
+                             unique_ptr<Node> position_target_)
 {
-    position_source = std::move(position_source_);
-    position_target = std::move(position_target_);
-    grid_source = std::move(grid_source_);
-    grid_target = std::move(grid_target_);
+    position_source = move(position_source_);
+    position_target = move(position_target_);
+    grid_source = move(grid_source_);
+    grid_target = move(grid_target_);
 }
 
-std::string MoveStatement::toString(int depth) const
+string MoveStatement::toString(int depth) const
 {
     return prefix(depth) + "Move Statement\n" +
             position_source->toString(depth + 1) + 
@@ -419,53 +422,53 @@ Node::~Node()
 {}
 
 
-OrExpression::OrExpression(std::unique_ptr<Node> lvalue_,
-                             std::unique_ptr<Node> rvalue_)
+OrExpression::OrExpression(unique_ptr<Node> lvalue_,
+                             unique_ptr<Node> rvalue_)
 {
-    lvalue = std::move(lvalue_);
-    rvalue = std::move(rvalue_);
+    lvalue = move(lvalue_);
+    rvalue = move(rvalue_);
 }
 
-std::string OrExpression::toString(int depth) const
+string OrExpression::toString(int depth) const
 {
     return prefix(depth) + "Or Expression\n" +
             lvalue->toString(depth + 1) +
             rvalue->toString(depth + 1);
 }
 
-RemoveStatement::RemoveStatement(std::unique_ptr<Node> position_,
-                                 std::unique_ptr<Node> grid_)
+RemoveStatement::RemoveStatement(unique_ptr<Node> position_,
+                                 unique_ptr<Node> grid_)
 {
-    position = std::move(position_);
-    grid = std::move(grid_);
+    position = move(position_);
+    grid = move(grid_);
 }
 
-std::string RemoveStatement::toString(int depth) const
+string RemoveStatement::toString(int depth) const
 {
     return prefix(depth) + "Remove Statement\n" +
             position->toString(depth + 1) + 
             grid->toString(depth + 1);
 }
 
-ReturnStatement::ReturnStatement(std::unique_ptr<Node> expr_)
+ReturnStatement::ReturnStatement(unique_ptr<Node> expr_)
 {
-    expr = std::move(expr_);
+    expr = move(expr_);
 }
 
-std::string ReturnStatement::toString(int depth) const
+string ReturnStatement::toString(int depth) const
 {
     return prefix(depth) + "Return Statement\n" + 
             expr->toString(depth + 1);
 }
 
-Scope::Scope(std::unique_ptr<std::vector<std::unique_ptr<Node>>> stmnts_)
+Scope::Scope(unique_ptr<vector<unique_ptr<Node>>> stmnts_)
 {
-    stmnts = std::move(stmnts_);
+    stmnts = move(stmnts_);
 }
 
-std::string Scope::toString(int depth) const
+string Scope::toString(int depth) const
 {
-    std::string ret_str = prefix(depth) + "Scope\n";
+    string ret_str = prefix(depth) + "Scope\n";
     for(auto const& stmnt: *stmnts)
     {
         ret_str += stmnt->toString(depth + 1);
@@ -473,16 +476,16 @@ std::string Scope::toString(int depth) const
     return ret_str;
 }
 
-SOArithmExpression::SOArithmExpression(std::unique_ptr<Node> lvalue_,
+SOArithmExpression::SOArithmExpression(unique_ptr<Node> lvalue_,
                                        Operator op_,
-                                       std::unique_ptr<Node> rvalue_)
+                                       unique_ptr<Node> rvalue_)
     : op(op_)
 {
-    lvalue = std::move(lvalue_);
-    rvalue = std::move(rvalue_);
+    lvalue = move(lvalue_);
+    rvalue = move(rvalue_);
 }
 
-std::string SOArithmExpression::toString(int depth) const
+string SOArithmExpression::toString(int depth) const
 {
     switch (op)
     {
@@ -495,13 +498,13 @@ std::string SOArithmExpression::toString(int depth) const
                lvalue->toString(depth + 1) +
                rvalue->toString(depth + 1);
     default:
-        throw std::runtime_error("Arithmetical Expression without operator");
+        throw runtime_error("Arithmetical Expression without operator");
         return "";
     };
 }
 
-TextLiteral::TextLiteral(std::string value_): value(value_){}
-std::string TextLiteral::toString(int depth) const
+TextLiteral::TextLiteral(string value_): value(value_){}
+string TextLiteral::toString(int depth) const
 {
     return prefix(depth) + "Text Literal (" + value + ")\n";
 }
@@ -536,20 +539,47 @@ void Identifier::accept(AstVisitor &visitor) const {};
 void Array::accept(AstVisitor &visitor) const {};
 
 
-CodeGenVisitor::CodeGenVisitor(llvm::LLVMContext &context)
+CodeGenVisitor::CodeGenVisitor(LLVMContext &context)
 :TheContext(context){
-    TheModule = make_unique<llvm::Module>("hexgrider", TheContext);
-    Builder = std::make_unique<llvm::IRBuilder<>>(TheContext);
+    TheModule = make_unique<Module>("hexgrider", TheContext);
+    Builder = make_unique<IRBuilder<>>(TheContext);
 }
 
-llvm::Value* CodeGenVisitor::LogErrorV(const char *Str) {
+void CodeGenVisitor::print(){
+    TheModule->print(errs(), nullptr);
+}
+
+Value* CodeGenVisitor::LogErrorV(const char *Str) {
     throw runtime_error(Str);
     return nullptr;
 }
 
-llvm::Value* CodeGenVisitor::getValue(const DecimalLiteral &dl){
-    return llvm::ConstantFP::get(TheContext, llvm::APFloat(dl.getValue()));
+Value* CodeGenVisitor::getValue(const DecimalLiteral &dl){
+    return ConstantFP::get(TheContext, APFloat(dl.getValue()));
 }
-llvm::Value* CodeGenVisitor::getValue(const DecimalLiteral &dl){
-    return llvm::ConstantFP::get(TheContext, llvm::APFloat(dl.getValue()));
+Value* CodeGenVisitor::getValue(const Identifier &id){
+    Value *V = NamedValues[id.getValue()];
+    if (!V) LogErrorV("Unkown variable name");
+    return V;
+}
+
+Function* CodeGenVisitor::operator()(const Scope &sc){
+    FunctionType *FT = 
+        FunctionType::get(Type::getVoidTy(TheContext), false);
+    Function *F =
+        Function::Create(FT, Function::ExternalLinkage, "Top level", TheModule.get());
+    BasicBlock *BB = BasicBlock::Create(TheContext, "entry", F);
+    Builder->SetInsertPoint(BB);
+    NamedValues.clear();
+
+    Node fst_stmnt = *(*sc.stmnts)[0];
+
+
+    if (Value* RetVal = getValue(*fst_stmnt)){
+        Builder->CreateRet(RetVal);
+        verifyFunction(*F);
+        return F;
+    }
+    F->eraseFromParent();
+    return nullptr;
 }
