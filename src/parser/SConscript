@@ -3,7 +3,7 @@ Import('env')
 Import('ast_lib')
 Import('lexer_lib')
 
-lib = env.StaticLibrary(target='parser', source=['Parser.cpp'])
+lib = env.StaticLibrary(target='parser', source=['Parser.cpp', Glob('../ast/*.cpp')])
 
 tests = env.BoostTests(Glob("tests/*.cpp"), lib, [ast_lib, lexer_lib])
 
