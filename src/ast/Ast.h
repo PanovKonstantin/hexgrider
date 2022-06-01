@@ -518,6 +518,7 @@ public:
     // virtual void operator()(const class IntegerLiteral &) = 0;
     
     virtual llvm::Value *getValue(const DecimalLiteral &dl) = 0;
+    virtual llvm::Value *getValue(const DecimalLiteral &dl) = 0;
     // virtual void operator()(const class DecimalLiteral &) = 0;
 
     // virtual void operator()(const class Hexgrid &) = 0;
@@ -539,7 +540,6 @@ class CodeGenVisitor : public AstVisitor {
     std::unique_ptr<llvm::Module> TheModule;
     std::unique_ptr<llvm::IRBuilder<>> Builder;
     std::map<std::string, llvm::Value *> NamedValues;
-    llvm::Value *result{};
 };
 
 
