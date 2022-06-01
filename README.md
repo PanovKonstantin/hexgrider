@@ -15,6 +15,6 @@ Type `scons` in project directory.
 
 ### Executing examples:
 
-`> ./tkom-calculator < example/example1`
-`> cat example/example1 | ./tkom-calculator`
+`> ./hexgrider < example/example1`
+`> cat example/example1 | ./hexgrider`
 `> ./run example/example1 `
