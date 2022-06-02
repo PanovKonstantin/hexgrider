@@ -15,13 +15,13 @@ std::unique_ptr<Node> readAndParseStdin()
   return p.parse();
 }
 
-
 int main()
-{/* 
-  llvm::LLVMContext ctx = llvm::LLVMContext();
+{
+  
+/*   llvm::LLVMContext ctx = llvm::LLVMContext();
   CodeGenVisitor cgv = CodeGenVisitor(ctx);
   std::unique_ptr<Node> n = readAndParseStdin();
-  cgv(n);
+  n->accept(cgv);
   cgv.print(); */
   std::cout << readAndParseStdin()->toString();
   return 0;

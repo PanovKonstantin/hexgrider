@@ -45,7 +45,7 @@ string ArithmeticalNegation::toString(int depth) const
     return prefix(depth) + "Arithmetical Negation Expression\n" + value->toString(depth + 1);
 }
 
-Array::Array(unique_ptr<vector<unique_ptr<Node>>> elements_)
+Array::Array(vector<unique_ptr<Node>> elements_)
 {
     elements = move(elements_);
 }
@@ -53,8 +53,8 @@ Array::Array(unique_ptr<vector<unique_ptr<Node>>> elements_)
 string Array::toString(int depth) const
 {
     string ret_str = prefix(depth) + "Array of length (" + 
-                          to_string(elements->size()) + ")\n";
-    for(auto const& element: *elements)
+                          to_string(elements.size()) + ")\n";
+    for(auto const& element: elements)
     {
         ret_str += element->toString(depth + 1);
     }
@@ -161,6 +161,7 @@ string DeclarationStatement::getType() const
         return toString(type);
 }
 
+
 string DeclarationStatement::toString(Type type_) const
 {
     switch (type_)
@@ -225,7 +226,7 @@ string ForeachStatement::toString(int depth) const
 }
 
 FunctionCall::FunctionCall(unique_ptr<Node> func_, 
-                           unique_ptr<vector<unique_ptr<Node>>> args_)
+                           vector<unique_ptr<Node>> args_)
 {
     func = move(func_);
     args = move(args_);
@@ -235,7 +236,7 @@ string FunctionCall::toString(int depth) const
 {
     auto ret_str =  prefix(depth) + "Function Call\n" + 
                     func->toString(depth+1);
-    for(auto const& arg: *args)
+    for(auto const& arg: args)
     {
         ret_str += arg->toString(depth + 1);
     }
@@ -244,7 +245,7 @@ string FunctionCall::toString(int depth) const
 }
 
 FunctionDefinition::FunctionDefinition(unique_ptr<Node> fun_,
-                         unique_ptr<vector<unique_ptr<Node>>> params_,
+                         vector<unique_ptr<Node>> params_,
                          unique_ptr<Node> scope_)
 {
     fun = move(fun_);
@@ -256,13 +257,13 @@ string FunctionDefinition::toString(int depth) const
 {
     string ret_str = prefix(depth) + "Function Defenition\n" + 
                           fun->toString(depth + 1);
-    for(auto const& param: *params)
+    for(auto const& param: params)
         ret_str += param->toString(depth + 1);
     ret_str += scope->toString(depth + 1);
     return ret_str;
 }
 
-Hexgrid::Hexgrid(unique_ptr<vector<unique_ptr<Node>>> cells_)
+Hexgrid::Hexgrid(vector<unique_ptr<Node>> cells_)
 {
     cells = move(cells_);
 }
@@ -270,7 +271,7 @@ Hexgrid::Hexgrid(unique_ptr<vector<unique_ptr<Node>>> cells_)
 string Hexgrid::toString(int depth) const
 {
     string ret_str = prefix(depth) + "Hexgrid\n";
-    for(auto const& cell: *cells)
+    for(auto const& cell: cells)
     {
         ret_str += cell->toString(depth + 1);
     }
@@ -334,7 +335,7 @@ string Identifier::toString(int depth) const
 }
 
 IfStatement::IfStatement(unique_ptr<Node> if_block_,
-                         unique_ptr<vector<unique_ptr<Node>>> elif_blocks_,
+                         vector<unique_ptr<Node>> elif_blocks_,
                          unique_ptr<Node> else_block_)
 {
     if_block = move(if_block_);
@@ -346,8 +347,8 @@ string IfStatement::toString(int depth) const
 {
     string ret_str = prefix(depth) + "If Statement\n" + 
                           if_block->toString(depth + 1);
-    if (elif_blocks)
-        for(auto const& elif_block: *elif_blocks)
+    if (!elif_blocks.empty())
+        for(auto const& elif_block: elif_blocks)
             ret_str += elif_block->toString(depth + 1);
     if (else_block)
         ret_str += else_block->toString(depth + 1);
@@ -461,7 +462,7 @@ string ReturnStatement::toString(int depth) const
             expr->toString(depth + 1);
 }
 
-Scope::Scope(unique_ptr<vector<unique_ptr<Node>>> stmnts_)
+Scope::Scope(vector<unique_ptr<Node>> stmnts_)
 {
     stmnts = move(stmnts_);
 }
@@ -469,7 +470,7 @@ Scope::Scope(unique_ptr<vector<unique_ptr<Node>>> stmnts_)
 string Scope::toString(int depth) const
 {
     string ret_str = prefix(depth) + "Scope\n";
-    for(auto const& stmnt: *stmnts)
+    for(auto const& stmnt: stmnts)
     {
         ret_str += stmnt->toString(depth + 1);
     }
@@ -508,35 +509,92 @@ string TextLiteral::toString(int depth) const
 {
     return prefix(depth) + "Text Literal (" + value + ")\n";
 }
-void AssignmentStatement::accept(AstVisitor &visitor) const {};
-void AddStatement::accept(AstVisitor &visitor) const {};
-void ConditionBlock::accept(AstVisitor &visitor) const {};
-void DeclarationStatement::accept(AstVisitor &visitor) const {};
-void ForeachStatement::accept(AstVisitor &visitor) const {};
-void FunctionCall::accept(AstVisitor &visitor) const {};
-void FunctionDefinition::accept(AstVisitor &visitor) const {};
-void IfStatement::accept(AstVisitor &visitor) const {};
-void MoveStatement::accept(AstVisitor &visitor) const {};
-void RemoveStatement::accept(AstVisitor &visitor) const {};
-void ReturnStatement::accept(AstVisitor &visitor) const {};
-void Scope::accept(AstVisitor &visitor) const {};
-void OrExpression::accept(AstVisitor &visitor) const {};
-void AndExpression::accept(AstVisitor &visitor) const {};
-void ComparisonExpression::accept(AstVisitor &visitor) const {};
-void HexgridExpression::accept(AstVisitor &visitor) const {};
-void SOArithmExpression::accept(AstVisitor &visitor) const {};
-void FOArithmExpression::accept(AstVisitor &visitor) const {};
-void LogicalNegation::accept(AstVisitor &visitor) const {};
-void ArithmeticalNegation::accept(AstVisitor &visitor) const {};
-void IndexingExpression::accept(AstVisitor &visitor) const {};
-void Literal::accept(AstVisitor &visitor) const {};
-void TextLiteral::accept(AstVisitor &visitor) const {};
-void IntegerLiteral::accept(AstVisitor &visitor) const {};
-void DecimalLiteral::accept(AstVisitor &visitor) const {};
-void Hexgrid::accept(AstVisitor &visitor) const {};
-void HexgridCell::accept(AstVisitor &visitor) const {};
-void Identifier::accept(AstVisitor &visitor) const {};
-void Array::accept(AstVisitor &visitor) const {};
+llvm::Value * AssignmentStatement::accept(AstVisitor &visitor) const {
+    return visitor.getValue(*this);};
+llvm::Value * AddStatement::accept(AstVisitor &visitor) const {
+    return visitor.getValue(*this);
+};
+llvm::Value * ConditionBlock::accept(AstVisitor &visitor) const {
+    return visitor.getValue(*this);
+};
+llvm::Value *DeclarationStatement::accept(AstVisitor &visitor) const {
+    return visitor.getValue(*this);
+};
+llvm::Value * ForeachStatement::accept(AstVisitor &visitor) const {
+    return visitor.getValue(*this);
+};
+llvm::Value * FunctionCall::accept(AstVisitor &visitor) const {
+    return visitor.getValue(*this);
+};
+llvm::Value * FunctionDefinition::accept(AstVisitor &visitor) const {
+    return visitor.getValue(*this);
+};
+llvm::Value * IfStatement::accept(AstVisitor &visitor) const {
+    return visitor.getValue(*this);
+};
+llvm::Value * MoveStatement::accept(AstVisitor &visitor) const {
+    return visitor.getValue(*this);
+};
+llvm::Value * RemoveStatement::accept(AstVisitor &visitor) const {
+    return visitor.getValue(*this);
+};
+llvm::Value * ReturnStatement::accept(AstVisitor &visitor) const {
+    return visitor.getValue(*this);
+};
+llvm::Value * Scope::accept(AstVisitor &visitor) const {
+    return visitor.getValue(*this);
+};
+llvm::Value * OrExpression::accept(AstVisitor &visitor) const {
+    return visitor.getValue(*this);
+};
+llvm::Value * AndExpression::accept(AstVisitor &visitor) const {
+    return visitor.getValue(*this);
+};
+llvm::Value * ComparisonExpression::accept(AstVisitor &visitor) const {
+    return visitor.getValue(*this);
+};
+llvm::Value * HexgridExpression::accept(AstVisitor &visitor) const {
+    return visitor.getValue(*this);
+};
+llvm::Value * SOArithmExpression::accept(AstVisitor &visitor) const {
+    return visitor.getValue(*this);
+};
+llvm::Value * FOArithmExpression::accept(AstVisitor &visitor) const {
+    return visitor.getValue(*this);
+};
+llvm::Value * LogicalNegation::accept(AstVisitor &visitor) const {
+    return visitor.getValue(*this);
+};
+llvm::Value * ArithmeticalNegation::accept(AstVisitor &visitor) const {
+    return visitor.getValue(*this);
+};
+llvm::Value * IndexingExpression::accept(AstVisitor &visitor) const {
+    return visitor.getValue(*this);
+};
+llvm::Value * Literal::accept(AstVisitor &visitor) const {
+    return visitor.getValue(*this);
+};
+llvm::Value * TextLiteral::accept(AstVisitor &visitor) const {
+    return visitor.getValue(*this);
+};
+llvm::Value * IntegerLiteral::accept(AstVisitor &visitor) const {
+    return visitor.getIdentifier(*this);
+};
+llvm::Value * DecimalLiteral::accept(AstVisitor &visitor) const {
+    return visitor.getValue(*this);
+};
+llvm::Value * Hexgrid::accept(AstVisitor &visitor) const {
+    return visitor.getValue(*this);
+};
+llvm::Value * HexgridCell::accept(AstVisitor &visitor) const {
+    return visitor.getValue(*this);
+};
+llvm::Value * Identifier::accept(AstVisitor &visitor) const {
+    return visitor.getValue(*this);
+};
+llvm::Value * Array::accept(AstVisitor &visitor) const {
+    return visitor.getValue(*this);
+};
 
 
 CodeGenVisitor::CodeGenVisitor(LLVMContext &context)
@@ -557,11 +615,36 @@ Value* CodeGenVisitor::LogErrorV(const char *Str) {
 Value* CodeGenVisitor::getValue(const DecimalLiteral &dl){
     return ConstantFP::get(TheContext, APFloat(dl.getValue()));
 }
-Value* CodeGenVisitor::getValue(const Identifier &id){
-    Value *V = NamedValues[id.getValue()];
-    if (!V) LogErrorV("Unkown variable name");
-    return V;
+string CodeGenVisitor::getIdentifier(const Identifier &id){
+    return id.value;
 }
+
+Value *CodeGenVisitor::getValue(const RemoveStatement &dl){return nullptr;}
+Value *CodeGenVisitor::getValue(const MoveStatement &dl){return nullptr;}
+Value *CodeGenVisitor::getValue(const IfStatement &dl){return nullptr;}
+Value *CodeGenVisitor::getValue(const FunctionDefinition &dl){return nullptr;}
+Value *CodeGenVisitor::getValue(const FunctionCall &dl){return nullptr;}
+Value *CodeGenVisitor::getValue(const ForeachStatement &dl){return nullptr;}
+Value *CodeGenVisitor::getValue(const ConditionBlock &dl){return nullptr;}
+Value *CodeGenVisitor::getValue(const AddStatement &dl){return nullptr;}
+Value *CodeGenVisitor::getValue(const AssignmentStatement &dl){return nullptr;}
+Value *CodeGenVisitor::getValue(const ReturnStatement &dl){return nullptr;}
+Value *CodeGenVisitor::getValue(const Scope &dl){return nullptr;}
+Value *CodeGenVisitor::getValue(const OrExpression &dl){return nullptr;}
+Value *CodeGenVisitor::getValue(const AndExpression &dl){return nullptr;}
+Value *CodeGenVisitor::getValue(const ComparisonExpression &dl){return nullptr;}
+Value *CodeGenVisitor::getValue(const HexgridExpression &dl){return nullptr;}
+Value *CodeGenVisitor::getValue(const SOArithmExpression &dl){return nullptr;}
+Value *CodeGenVisitor::getValue(const FOArithmExpression &dl){return nullptr;}
+Value *CodeGenVisitor::getValue(const LogicalNegation &dl){return nullptr;}
+Value *CodeGenVisitor::getValue(const ArithmeticalNegation &dl){return nullptr;}
+Value *CodeGenVisitor::getValue(const IndexingExpression &dl){return nullptr;}
+Value *CodeGenVisitor::getValue(const Literal &dl){return nullptr;}
+Value *CodeGenVisitor::getValue(const TextLiteral &dl){return nullptr;}
+Value *CodeGenVisitor::getValue(const IntegerLiteral &dl){return nullptr;}
+Value *CodeGenVisitor::getValue(const Hexgrid &dl){return nullptr;}
+Value *CodeGenVisitor::getValue(const HexgridCell &dl){return nullptr;}
+Value *CodeGenVisitor::getValue(const Array &dl){return nullptr;}
 
 Function* CodeGenVisitor::operator()(const Scope &sc){
     FunctionType *FT = 
@@ -572,14 +655,17 @@ Function* CodeGenVisitor::operator()(const Scope &sc){
     Builder->SetInsertPoint(BB);
     NamedValues.clear();
 
-    Node fst_stmnt = *(*sc.stmnts)[0];
-
-
-    if (Value* RetVal = getValue(*fst_stmnt)){
+    if (Value* RetVal = sc.stmnts[0]->accept(*this)){
         Builder->CreateRet(RetVal);
         verifyFunction(*F);
         return F;
     }
     F->eraseFromParent();
+    return nullptr;;
+}
+
+Value *CodeGenVisitor::getValue(const DeclarationStatement &ds){
+    string name = ds.var->accept(*this);
+    NamedValues[name] = 
     return nullptr;
 }

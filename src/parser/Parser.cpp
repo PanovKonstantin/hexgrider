@@ -19,9 +19,9 @@ Parser::~Parser()
 std::unique_ptr<Node> Parser::parse()
 {
     advance();
-    auto script_statments = std::make_unique<std::vector<std::unique_ptr<Node>>>();
+    auto script_statments = std::vector<std::unique_ptr<Node>>();
     while (!checkTokenType(Token::Type::EndOfFile))
-        script_statments->push_back(readStatementOrFuncDef());
+        script_statments.push_back(readStatementOrFuncDef());
     return std::make_unique<Scope>(std::move(script_statments));
 }
 
@@ -82,10 +82,10 @@ std::unique_ptr<Node> Parser::readFunctionCall(std::unique_ptr<ast::Node> func)
 {
     requireToken(Token::Type::Operator, "(");
     advance();
-    auto args = std::make_unique<std::vector<std::unique_ptr<Node>>>();
+    auto args = std::vector<std::unique_ptr<Node>>();
     while (!checkToken(Token::Type::Operator, ")"))
     {
-        args->push_back(readExpression());
+        args.push_back(readExpression());
         if (checkToken(Token::Type::Operator, ","))
             advance();
         if (checkTokenType(Token::Type::EndOfFile))
@@ -131,7 +131,7 @@ std::unique_ptr<Node> Parser::readIfStatement()
 {
     std::unique_ptr<Node> if_block = nullptr;
     std::unique_ptr<Node> else_block = nullptr;
-    auto elif_blocks = std::make_unique<std::vector<std::unique_ptr<Node>>>();
+    auto elif_blocks = std::vector<std::unique_ptr<Node>>();
     requireToken(Token::Type::Keyword, "if");
     advance();
     auto cond = readCondition();
@@ -142,7 +142,7 @@ std::unique_ptr<Node> Parser::readIfStatement()
         advance();
         cond = readCondition();
         scope = readStatementBlock();
-        elif_blocks->push_back(std::make_unique<ConditionBlock>(std::move(cond),
+        elif_blocks.push_back(std::make_unique<ConditionBlock>(std::move(cond),
                                                                 std::move(scope)));
     }
     if(checkToken(Token::Type::Keyword, "else"))
@@ -240,10 +240,10 @@ std::unique_ptr<Node> Parser::readStatementBlock()
 {
     requireToken(Token::Type::Operator, "{");
     advance();
-    auto statments = std::make_unique<std::vector<std::unique_ptr<Node>>>();
+    auto statments = std::vector<std::unique_ptr<Node>>();
     while (!checkToken(Token::Type::Operator, "}"))
     {
-        statments->push_back(readStatement());
+        statments.push_back(readStatement());
         if (checkTokenType(Token::Type::EndOfFile))
             requireToken(Token::Type::Operator, "}");
     }
@@ -256,12 +256,12 @@ std::unique_ptr<Node> Parser::readFuncDef()
     requireToken(Token::Type::Keyword, "func");
     advance();
     auto fun = readDeclr();
-    auto params = std::make_unique<std::vector<std::unique_ptr<Node>>>();
+    auto params = std::vector<std::unique_ptr<Node>>();
     requireToken(Token::Type::Operator, "(");
     advance();
     while (!checkToken(Token::Type::Operator, ")"))
     {
-        params->push_back(readDeclr());
+        params.push_back(readDeclr());
         if (checkToken(Token::Type::Operator, ","))
             advance();
         if (checkTokenType(Token::Type::EndOfFile))
@@ -498,10 +498,10 @@ std::unique_ptr<Node> Parser::readIdentifierOrFuncCall()
     if (checkToken(Token::Type::Operator, "("))
     {
         advance();
-        auto args = std::make_unique<std::vector<std::unique_ptr<Node>>>();
+        auto args = std::vector<std::unique_ptr<Node>>();
         while (!checkToken(Token::Type::Operator, ")"))
         {
-            args->push_back(readExpression());
+            args.push_back(readExpression());
             if (checkToken(Token::Type::Operator, ","))
                 advance();
             if (checkTokenType(Token::Type::EndOfFile))
@@ -517,10 +517,10 @@ std::unique_ptr<Node> Parser::readArray()
 {
     requireToken(Token::Type::Operator, "[");
     advance();
-    auto elements = std::make_unique<std::vector<std::unique_ptr<Node>>>();
+    auto elements = std::vector<std::unique_ptr<Node>>();
     while (!checkToken(Token::Type::Operator, "]"))
     {
-        elements->push_back(readExpression());
+        elements.push_back(readExpression());
         if (checkToken(Token::Type::Operator, ","))
             advance();
         if (checkTokenType(Token::Type::EndOfFile))
@@ -534,7 +534,7 @@ std::unique_ptr<Node> Parser::readHexgrid()
 {
     requireToken(Token::Type::Operator, "<");
     advance();
-    auto cells = std::make_unique<std::vector<std::unique_ptr<Node>>>();
+    auto cells = std::vector<std::unique_ptr<Node>>();
     std::unique_ptr<Node> pos = nullptr;
     std::unique_ptr<Node> value = nullptr;
     std::unique_ptr<Node> cell = nullptr;
@@ -547,7 +547,7 @@ std::unique_ptr<Node> Parser::readHexgrid()
         if (checkToken(Token::Type::Operator, ","))
             advance();
         cell = std::make_unique<HexgridCell>(std::move(value), std::move(pos));
-        cells->push_back(std::move(cell));
+        cells.push_back(std::move(cell));
         if (checkTokenType(Token::Type::EndOfFile))
             requireToken(Token::Type::Operator, ">");
     }

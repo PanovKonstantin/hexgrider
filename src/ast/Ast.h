@@ -28,7 +28,7 @@ public:
   {
     return std::string(depth, '|');
   }
-  virtual void accept(class AstVisitor &visitor) const = 0;
+  virtual llvm::Value * accept(class AstVisitor &visitor) const = 0;
 };
 
 
@@ -38,7 +38,7 @@ public:
     AssignmentStatement(std::unique_ptr<Node> target_, 
                         std::unique_ptr<Node> value_);
     ~AssignmentStatement(){};
-    void accept(AstVisitor &visitor) const override;
+    llvm::Value * accept(AstVisitor &visitor) const override;
 
     std::string toString(int depth = 0) const override;
 
@@ -55,7 +55,7 @@ public:
                 std::unique_ptr<Node> added_to_,
                 std::unique_ptr<Node> added_at_);
     ~AddStatement(){};
-    void accept(AstVisitor &visitor) const override;
+    llvm::Value * accept(AstVisitor &visitor) const override;
 
     std::string toString(int depth = 0) const override;
     std::unique_ptr<ast::Node> being_added;
@@ -70,7 +70,7 @@ public:
     ConditionBlock(std::unique_ptr<Node> condition_,
             std::unique_ptr<Node> scope_);
     ~ConditionBlock(){};
-    void accept(AstVisitor &visitor) const override;
+    llvm::Value * accept(AstVisitor &visitor) const override;
 
     std::string toString(int depth = 0) const override;
     std::unique_ptr<ast::Node> condition;
@@ -90,7 +90,7 @@ public:
     };
     DeclarationStatement(Type type_, std::unique_ptr<Node> var_, int dimenstion_=0);
     ~DeclarationStatement(){};
-    void accept(AstVisitor &visitor) const override;
+    llvm::Value * accept(AstVisitor &visitor) const override;
 
     std::string toString(int depth = 0) const override;
     std::string getType() const;
@@ -110,7 +110,7 @@ public:
                 std::unique_ptr<Node> iterated_,
                 std::unique_ptr<Node> scope_);
     ~ForeachStatement(){};
-    void accept(AstVisitor &visitor) const override;
+    llvm::Value * accept(AstVisitor &visitor) const override;
 
     std::string toString(int depth = 0) const override;
     std::unique_ptr<ast::Node> iterator;
@@ -123,14 +123,14 @@ class FunctionCall : public Node
 {
 public:
     FunctionCall(std::unique_ptr<Node> func_, 
-                 std::unique_ptr<std::vector<std::unique_ptr<ast::Node>>> args_);
+                 std::vector<std::unique_ptr<ast::Node>> args_);
     ~FunctionCall(){};
-    void accept(AstVisitor &visitor) const override;
+    llvm::Value * accept(AstVisitor &visitor) const override;
 
     std::string toString(int depth = 0) const override;
 
     std::unique_ptr<Node> func;
-    std::unique_ptr<std::vector<std::unique_ptr<ast::Node>>> args;
+    std::vector<std::unique_ptr<ast::Node>> args;
 };
 
 
@@ -139,14 +139,14 @@ class FunctionDefinition : public Node
 public:
     FunctionDefinition( 
                 std::unique_ptr<Node> fun_,
-                std::unique_ptr<std::vector<std::unique_ptr<ast::Node>>> params_,
+                std::vector<std::unique_ptr<ast::Node>> params_,
                 std::unique_ptr<Node> scope_);
     ~FunctionDefinition(){};
-    void accept(AstVisitor &visitor) const override;
+    llvm::Value * accept(AstVisitor &visitor) const override;
 
     std::string toString(int depth = 0) const override;
     std::unique_ptr<ast::Node> fun;
-    std::unique_ptr<std::vector<std::unique_ptr<ast::Node>>> params;
+    std::vector<std::unique_ptr<ast::Node>> params;
     std::unique_ptr<ast::Node> scope;
 };
 
@@ -155,15 +155,15 @@ class IfStatement : public Node
 public:
     IfStatement( 
                 std::unique_ptr<Node> if_block_,
-                std::unique_ptr<std::vector<std::unique_ptr<ast::Node>>> elif_blocks_,
+                std::vector<std::unique_ptr<ast::Node>> elif_blocks_,
                 std::unique_ptr<Node> else_block_);
     ~IfStatement(){};
-    void accept(AstVisitor &visitor) const override;
+    llvm::Value * accept(AstVisitor &visitor) const override;
 
     std::string toString(int depth = 0) const override;
     std::unique_ptr<ast::Node> if_block;
     std::unique_ptr<ast::Node> else_block;
-    std::unique_ptr<std::vector<std::unique_ptr<ast::Node>>> elif_blocks;
+    std::vector<std::unique_ptr<ast::Node>> elif_blocks;
 };
 
 
@@ -175,7 +175,7 @@ public:
                   std::unique_ptr<Node> grid_target_,
                   std::unique_ptr<Node> position_target_);
     ~MoveStatement(){};
-    void accept(AstVisitor &visitor) const override;
+    llvm::Value * accept(AstVisitor &visitor) const override;
 
     std::string toString(int depth = 0) const override;
     std::unique_ptr<Node> position_source;
@@ -191,7 +191,7 @@ public:
     RemoveStatement(std::unique_ptr<Node> position_,
                     std::unique_ptr<Node> grid_);
     ~RemoveStatement(){};
-    void accept(AstVisitor &visitor) const override;
+    llvm::Value * accept(AstVisitor &visitor) const override;
 
     std::string toString(int depth = 0) const override;
     std::unique_ptr<Node> position;
@@ -204,7 +204,7 @@ class ReturnStatement : public Node
 public:
     ReturnStatement(std::unique_ptr<Node> expr_);
     ~ReturnStatement(){};
-    void accept(AstVisitor &visitor) const override;
+    llvm::Value * accept(AstVisitor &visitor) const override;
 
     std::string toString(int depth = 0) const override;
     std::unique_ptr<ast::Node> expr;
@@ -214,12 +214,12 @@ public:
 class Scope : public Node
 {
 public:
-    Scope(std::unique_ptr<std::vector<std::unique_ptr<ast::Node>>> stmnts_);
+    Scope(std::vector<std::unique_ptr<ast::Node>> stmnts_);
     ~Scope(){};
-    void accept(AstVisitor &visitor) const override;
+    llvm::Value * accept(AstVisitor &visitor) const override;
 
     std::string toString(int depth = 0) const override;
-    std::unique_ptr<std::vector<std::unique_ptr<ast::Node>>> stmnts;
+    std::vector<std::unique_ptr<ast::Node>> stmnts;
 };
 
 
@@ -234,7 +234,7 @@ public:
     OrExpression(std::unique_ptr<Node> lvalue_,
                  std::unique_ptr<Node> rvalue_);
     ~OrExpression(){};
-    void accept(AstVisitor &visitor) const override;
+    llvm::Value * accept(AstVisitor &visitor) const override;
 
     std::string toString(int depth = 0) const override;
     std::unique_ptr<Node> lvalue;
@@ -248,7 +248,7 @@ public:
     AndExpression(std::unique_ptr<Node> lvalue_,
                        std::unique_ptr<Node> rvalue_);
     ~AndExpression(){};
-    void accept(AstVisitor &visitor) const override;
+    llvm::Value * accept(AstVisitor &visitor) const override;
 
     std::string toString(int depth = 0) const override;
     std::unique_ptr<Node> lvalue;
@@ -272,7 +272,7 @@ public:
                        Operator op_,
                        std::unique_ptr<Node> rvalue_);
     ~ComparisonExpression(){};
-    void accept(AstVisitor &visitor) const override;
+    llvm::Value * accept(AstVisitor &visitor) const override;
 
     std::string toString(int depth = 0) const override;
     std::string toString(Operator op_)  const;
@@ -295,7 +295,7 @@ public:
                        Operator op_,
                        std::unique_ptr<Node> rvalue_);
     ~HexgridExpression(){};
-    void accept(AstVisitor &visitor) const override;
+    llvm::Value * accept(AstVisitor &visitor) const override;
 
     std::string toString(int depth = 0) const override;
     std::unique_ptr<Node> lvalue;
@@ -316,7 +316,7 @@ public:
                        Operator op_,
                        std::unique_ptr<Node> rvalue_);
     ~SOArithmExpression(){};
-    void accept(AstVisitor &visitor) const override;
+    llvm::Value * accept(AstVisitor &visitor) const override;
 
     std::string toString(int depth = 0) const override;
     std::unique_ptr<Node> lvalue;
@@ -333,7 +333,7 @@ public:
         Multiply,
         Divide
     };
-    void accept(AstVisitor &visitor) const override;
+    llvm::Value * accept(AstVisitor &visitor) const override;
     FOArithmExpression(std::unique_ptr<Node> lvalue_,
                        Operator op_,
                        std::unique_ptr<Node> rvalue_);
@@ -351,7 +351,7 @@ class LogicalNegation : public Node
 public:
     LogicalNegation(std::unique_ptr<Node> value_);
     ~LogicalNegation(){};
-    void accept(AstVisitor &visitor) const override;
+    llvm::Value * accept(AstVisitor &visitor) const override;
 
     std::string toString(int depth = 0) const override;
     std::unique_ptr<Node> value;
@@ -363,7 +363,7 @@ class ArithmeticalNegation : public Node
 public:
     ArithmeticalNegation(std::unique_ptr<Node> value_);
     ~ArithmeticalNegation(){};
-    void accept(AstVisitor &visitor) const override;
+    llvm::Value * accept(AstVisitor &visitor) const override;
 
     std::string toString(int depth = 0) const override;
     std::unique_ptr<Node> value;
@@ -376,7 +376,7 @@ public:
     IndexingExpression(std::unique_ptr<ast::Node> indexOn_,
                        std::unique_ptr<ast::Node> indexBy_);
     ~IndexingExpression(){};
-    void accept(AstVisitor &visitor) const override;
+    llvm::Value * accept(AstVisitor &visitor) const override;
 
     std::string toString(int depth = 0) const override;
 
@@ -396,7 +396,7 @@ class Literal : public Node
 public:
     Literal();
     ~Literal(){};
-    void accept(AstVisitor &visitor) const override;
+    llvm::Value * accept(AstVisitor &visitor) const override;
     std::string toString(int depth = 0) const override;
 };
 
@@ -406,7 +406,7 @@ class TextLiteral : public Node
 public:
     TextLiteral(std::string value_);
     ~TextLiteral(){};
-    void accept(AstVisitor &visitor) const override;
+    llvm::Value * accept(AstVisitor &visitor) const override;
 
     std::string toString(int depth = 0) const override;
     std::string value;
@@ -418,7 +418,7 @@ class IntegerLiteral : public Literal
 public:
     IntegerLiteral(int value_);
     ~IntegerLiteral(){};
-    void accept(AstVisitor &visitor) const override;
+    llvm::Value *accept(AstVisitor &visitor) const override;
 
     std::string toString(int depth = 0) const override;
     int value;
@@ -430,7 +430,7 @@ class DecimalLiteral : public Node
 public:
     DecimalLiteral(double value_);
     ~DecimalLiteral(){};
-    void accept(AstVisitor &visitor) const override;
+    llvm::Value *accept(AstVisitor &visitor) const override;
     std::string toString(int depth = 0) const override;
     double getValue() const;
 private:
@@ -441,12 +441,12 @@ private:
 class Hexgrid : public Node
 {
 public:
-    Hexgrid(std::unique_ptr<std::vector<std::unique_ptr<ast::Node>>> cells_);
+    Hexgrid(std::vector<std::unique_ptr<ast::Node>> cells_);
     ~Hexgrid(){};
-    void accept(AstVisitor &visitor) const override;
+    llvm::Value *accept(AstVisitor &visitor) const override;
 
     std::string toString(int depth = 0) const override;
-    std::unique_ptr<std::vector<std::unique_ptr<ast::Node>>> cells;
+    std::vector<std::unique_ptr<ast::Node>> cells;
 };
 
 
@@ -456,7 +456,7 @@ public:
     HexgridCell(std::unique_ptr<Node> value_,
                 std::unique_ptr<Node> pos_);
     ~HexgridCell(){};
-    void accept(AstVisitor &visitor) const override;
+    llvm::Value *accept(AstVisitor &visitor) const override;
 
     std::string toString(int depth = 0) const override;
     std::unique_ptr<ast::Node> pos;
@@ -469,7 +469,7 @@ class Identifier : public Node
 public:
     Identifier(std::string value_);
     ~Identifier(){};
-    void accept(AstVisitor &visitor) const override;
+    llvm::Value *accept(AstVisitor &visitor) const override;
 
     std::string toString(int depth = 0) const override;
     std::string getValue() const;
@@ -481,12 +481,12 @@ private:
 class Array : public Node
 {
 public:
-    Array(std::unique_ptr<std::vector<std::unique_ptr<ast::Node>>> elements_);
+    Array(std::vector<std::unique_ptr<ast::Node>> elements_);
     ~Array(){};
-    void accept(AstVisitor &visitor) const override;
+    llvm::Value *accept(AstVisitor &visitor) const override;
 
     std::string toString(int depth = 0) const override;
-    std::unique_ptr<std::vector<std::unique_ptr<ast::Node>>> elements;
+    std::vector<std::unique_ptr<ast::Node>> elements;
 };
 
 
@@ -497,38 +497,36 @@ public:
 
     virtual llvm::Function* operator()(const Scope &sc) = 0;
 
-    // virtual void operator()(const class AssignmentStatement &) = 0;
-    // virtual void operator()(const class AddStatement &) = 0;
-    // virtual void operator()(const class ConditionBlock &) = 0;
-    // virtual void operator()(const class DeclarationStatement &) = 0;
-    // virtual void operator()(const class ForeachStatement &) = 0;
-    // virtual void operator()(const class FunctionCall &) = 0;
-    // virtual void operator()(const class FunctionDefinition &) = 0;
-    // virtual void operator()(const class IfStatement &) = 0;
-    // virtual void operator()(const class MoveStatement &) = 0;
-    // virtual void operator()(const class RemoveStatement &) = 0;
-    // virtual void operator()(const class ReturnStatement &) = 0;
-    // virtual void operator()(const class OrExpression &) = 0;
-    // virtual void operator()(const class AndExpression &) = 0;
-    // virtual void operator()(const class ComparisonExpression &) = 0;
-    // virtual void operator()(const class HexgridExpression &) = 0;
-    // virtual void operator()(const class SOArithmExpression &) = 0;
-    // virtual void operator()(const class FOArithmExpression &) = 0;
-    // virtual void operator()(const class LogicalNegation &) = 0;
-    // virtual void operator()(const class ArithmeticalNegation &) = 0;
-    // virtual void operator()(const class IndexingExpression &) = 0;
-    // virtual void operator()(const class Literal &) = 0;
-    // virtual void operator()(const class TextLiteral &) = 0;
-    // virtual void operator()(const class IntegerLiteral &) = 0;
-    
     virtual llvm::Value *getValue(const DecimalLiteral &dl) = 0;
     virtual llvm::Value *getValue(const Identifier &dl) = 0;
-    // virtual void operator()(const class DecimalLiteral &) = 0;
-
-    // virtual void operator()(const class Hexgrid &) = 0;
-    // virtual void operator()(const class HexgridCell &) = 0;
-    // virtual void operator()(const class Identifier &) = 0;
-    // virtual void operator()(const class Array &) = 0;
+    virtual llvm::Value *getValue(const RemoveStatement &dl) = 0;
+    virtual llvm::Value *getValue(const MoveStatement &dl) = 0;
+    virtual llvm::Value *getValue(const IfStatement &dl) = 0;
+    virtual llvm::Value *getValue(const FunctionDefinition &dl) = 0;
+    virtual llvm::Value *getValue(const FunctionCall &dl) = 0;
+    virtual llvm::Value *getValue(const ForeachStatement &dl) = 0;
+    virtual llvm::Value *getValue(const DeclarationStatement &dl) = 0;
+    virtual llvm::Value *getValue(const ConditionBlock &dl) = 0;
+    virtual llvm::Value *getValue(const AddStatement &dl) = 0;
+    virtual llvm::Value *getValue(const AssignmentStatement &dl) = 0;
+    virtual llvm::Value *getValue(const ReturnStatement &dl) = 0;
+    virtual llvm::Value *getValue(const Scope &dl) = 0;
+    virtual llvm::Value *getValue(const OrExpression &dl) = 0;
+    virtual llvm::Value *getValue(const AndExpression &dl) = 0;
+    virtual llvm::Value *getValue(const ComparisonExpression &dl) = 0;
+    virtual llvm::Value *getValue(const HexgridExpression &dl) = 0;
+    virtual llvm::Value *getValue(const SOArithmExpression &dl) = 0;
+    virtual llvm::Value *getValue(const FOArithmExpression &dl) = 0;
+    virtual llvm::Value *getValue(const LogicalNegation &dl) = 0;
+    virtual llvm::Value *getValue(const ArithmeticalNegation &dl) = 0;
+    virtual llvm::Value *getValue(const IndexingExpression &dl) = 0;
+    virtual llvm::Value *getValue(const Literal &dl) = 0;
+    virtual llvm::Value *getValue(const TextLiteral &dl) = 0;
+    virtual llvm::Value *getValue(const IntegerLiteral &dl) = 0;
+    virtual llvm::Value *getValue(const Hexgrid &dl) = 0;
+    virtual llvm::Value *getValue(const HexgridCell &dl) = 0;
+    virtual llvm::Value *getValue(const Array &dl) = 0;
+    virtual std::string getIdentifier(const Identifier &id) = 0;
 };
 
 class CodeGenVisitor : public AstVisitor {
@@ -536,10 +534,38 @@ class CodeGenVisitor : public AstVisitor {
     CodeGenVisitor(llvm::LLVMContext &context);
 
     llvm::Function* operator()(const Scope &sc) override;
+
     llvm::Value *getValue(const DecimalLiteral &dl) override;
-    llvm::Value *getValue(const Identifier &id) override;
-    
-    // llvm::Value *getVa
+    llvm::Value *getValue(const Identifier &dl) override;
+    llvm::Value *getValue(const RemoveStatement &dl) override;
+    llvm::Value *getValue(const MoveStatement &dl) override;
+    llvm::Value *getValue(const IfStatement &dl) override;
+    llvm::Value *getValue(const FunctionDefinition &dl) override;
+    llvm::Value *getValue(const FunctionCall &dl) override;
+    llvm::Value *getValue(const ForeachStatement &dl) override;
+    llvm::Value *getValue(const DeclarationStatement &dl) override;
+    llvm::Value *getValue(const ConditionBlock &dl) override;
+    llvm::Value *getValue(const AddStatement &dl) override;
+    llvm::Value *getValue(const AssignmentStatement &dl) override;
+    llvm::Value *getValue(const ReturnStatement &dl) override;
+    llvm::Value *getValue(const Scope &dl) override;
+    llvm::Value *getValue(const OrExpression &dl) override;
+    llvm::Value *getValue(const AndExpression &dl) override;
+    llvm::Value *getValue(const ComparisonExpression &dl) override;
+    llvm::Value *getValue(const HexgridExpression &dl) override;
+    llvm::Value *getValue(const SOArithmExpression &dl) override;
+    llvm::Value *getValue(const FOArithmExpression &dl) override;
+    llvm::Value *getValue(const LogicalNegation &dl) override;
+    llvm::Value *getValue(const ArithmeticalNegation &dl) override;
+    llvm::Value *getValue(const IndexingExpression &dl) override;
+    llvm::Value *getValue(const Literal &dl) override;
+    llvm::Value *getValue(const TextLiteral &dl) override;
+    llvm::Value *getValue(const IntegerLiteral &dl) override;
+    llvm::Value *getValue(const Hexgrid &dl) override;
+    llvm::Value *getValue(const HexgridCell &dl) override;
+    llvm::Value *getValue(const Array &dl) override;
+
+    std::string getIdentifier(const Identifier &id) override;
 
     llvm::Value *LogErrorV(const char *Str);
     void print();
