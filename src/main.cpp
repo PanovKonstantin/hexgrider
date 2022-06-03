@@ -2,8 +2,8 @@
 #include <sstream>
 #include "lexer/Lexer.h"
 #include "ast/Ast.h"
+#include "ast/StandardScope.h"
 #include "parser/Parser.h"
-#include "llvm/IR/LLVMContext.h"
 
 using namespace lexer;
 using namespace parser;
@@ -17,12 +17,7 @@ std::unique_ptr<Node> readAndParseStdin()
 
 int main()
 {
-  
-/*   llvm::LLVMContext ctx = llvm::LLVMContext();
-  CodeGenVisitor cgv = CodeGenVisitor(ctx);
-  std::unique_ptr<Node> n = readAndParseStdin();
-  n->accept(cgv);
-  cgv.print(); */
   std::cout << readAndParseStdin()->toString();
+  // readAndParseStdin()->calculate(ast::standard_scope);
   return 0;
 }

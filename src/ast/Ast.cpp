@@ -1,7 +1,8 @@
 #include "Ast.h"
 using namespace ast;
 using namespace std;
-using namespace llvm;
+
+
 
 AddStatement::AddStatement(
                 unique_ptr<Node> being_added_,
@@ -15,7 +16,7 @@ AddStatement::AddStatement(
 
 string AddStatement::toString(int depth) const
 {
-    return prefix(depth) + "Add Statement\n" + 
+    return string(depth, '|') + "Add Statement\n" + 
             being_added->toString(depth + 1) + 
             added_to->toString(depth + 1) + 
             added_at->toString(depth + 1);
@@ -30,7 +31,7 @@ AndExpression::AndExpression(unique_ptr<Node> lvalue_,
 
 string AndExpression::toString(int depth) const
 {
-    return prefix(depth) + "And Expression\n" +
+    return string(depth, '|') + "And Expression\n" +
             lvalue->toString(depth + 1) +
             rvalue->toString(depth + 1);
 }
@@ -42,7 +43,7 @@ ArithmeticalNegation::ArithmeticalNegation(unique_ptr<Node>  value_)
 
 string ArithmeticalNegation::toString(int depth) const
 {
-    return prefix(depth) + "Arithmetical Negation Expression\n" + value->toString(depth + 1);
+    return string(depth, '|') + "Arithmetical Negation Expression\n" + value->toString(depth + 1);
 }
 
 Array::Array(vector<unique_ptr<Node>> elements_)
@@ -52,7 +53,7 @@ Array::Array(vector<unique_ptr<Node>> elements_)
 
 string Array::toString(int depth) const
 {
-    string ret_str = prefix(depth) + "Array of length (" + 
+    string ret_str = string(depth, '|') + "Array of length (" + 
                           to_string(elements.size()) + ")\n";
     for(auto const& element: elements)
     {
@@ -61,18 +62,35 @@ string Array::toString(int depth) const
     return ret_str;
 }
 
-AssignmentStatement::AssignmentStatement(unique_ptr<Node> target_, 
-                                         unique_ptr<Node> value_)
+AssignmentStatement::AssignmentStatement(
+    unique_ptr<DeclarationStatement> declr_, 
+    unique_ptr<Node> value_)
 {
-    target = move(target_);
+    iden = nullptr;
+    decl = move(declr_);
+    value = move(value_);
+}
+
+AssignmentStatement::AssignmentStatement(
+    unique_ptr<Identifier> iden_, 
+    unique_ptr<Node> value_)
+{
+    decl = nullptr;
+    iden = move(iden_);
     value = move(value_);
 }
 
 string AssignmentStatement::toString(int depth) const
 {
-    return prefix(depth) + "Assignment\n" + 
-           target->toString(depth+1) + 
-           value->toString(depth+1);
+    if (decl){
+        return  string(depth, '|') + "Assignment\n" + 
+                decl->toString(depth+1) + 
+                value->toString(depth+1);
+    } else {
+        return  string(depth, '|') + "Assignment\n" + 
+                iden->toString(depth+1) + 
+                value->toString(depth+1);
+    }
            
 }
 
@@ -87,7 +105,7 @@ ComparisonExpression::ComparisonExpression(unique_ptr<Node> lvalue_,
 
 string ComparisonExpression::toString(int depth) const
 {
-    return prefix(depth) + toString(op) +
+    return string(depth, '|') + toString(op) +
             lvalue->toString(depth + 1) +
             rvalue->toString(depth + 1);
 }
@@ -117,7 +135,7 @@ ConditionBlock::ConditionBlock(unique_ptr<Node> condition_,
 
 string ConditionBlock::toString(int depth) const
 {
-    return prefix(depth) + "Condition Block\n" + 
+    return string(depth, '|') + "Condition Block\n" + 
             condition->toString(depth + 1) + 
             scope->toString(depth + 1);
 }
@@ -130,7 +148,7 @@ DecimalLiteral::DecimalLiteral(double value_)
 
 string DecimalLiteral::toString(int depth) const
 {
-    return prefix(depth) + "Decimal Literal (" + to_string(value) + ")\n";
+    return string(depth, '|') + "Decimal Literal (" + to_string(value) + ")\n";
 }
 
 double DecimalLiteral::getValue() const {
@@ -138,19 +156,19 @@ double DecimalLiteral::getValue() const {
 }
 
 DeclarationStatement::DeclarationStatement(Type type_, 
-                                            unique_ptr<Node> var_,
+                                            unique_ptr<Identifier> iden_,
                                             int dimenstion_)
 {
     type = type_;
-    var = move(var_);
+    iden = move(iden_);
     dimenstion=dimenstion_;
 }
 
 string DeclarationStatement::toString(int depth) const
 {
-    return prefix(depth) + "Declaration\n" + 
-           prefix(depth + 1) + "Variable Type (" + getType() + ")\n" +
-           var->toString(depth+1);
+    return string(depth, '|') + "Declaration\n" + 
+           string(depth + 1, '|') + "Variable Type (" + getType() + ")\n" +
+           iden->toString(depth+1);
 }
 
 string DeclarationStatement::getType() const
@@ -179,7 +197,6 @@ string DeclarationStatement::toString(Type type_) const
         return "";
     }
 }
-
 FOArithmExpression::FOArithmExpression(unique_ptr<Node> lvalue_,
                                        Operator op_,
                                        unique_ptr<Node> rvalue_)
@@ -194,11 +211,11 @@ string FOArithmExpression::toString(int depth) const
     switch (op)
     {
     case Operator::Multiply:
-        return prefix(depth) + "Multiply Expression\n" +
+        return string(depth, '|') + "Multiply Expression\n" +
                lvalue->toString(depth + 1) +
                rvalue->toString(depth + 1);
     case Operator::Divide:
-        return prefix(depth) + "Divide Expression\n" +
+        return string(depth, '|') + "Divide Expression\n" +
                lvalue->toString(depth + 1) +
                rvalue->toString(depth + 1);
     default:
@@ -219,7 +236,7 @@ ForeachStatement::ForeachStatement(
 
 string ForeachStatement::toString(int depth) const
 {
-    return prefix(depth) + "Foreach Statement\n" + 
+    return string(depth, '|') + "Foreach Statement\n" + 
             iterator->toString(depth + 1) + 
             iterated->toString(depth + 1) + 
             scope->toString(depth + 1);
@@ -234,7 +251,7 @@ FunctionCall::FunctionCall(unique_ptr<Node> func_,
 
 string FunctionCall::toString(int depth) const
 {
-    auto ret_str =  prefix(depth) + "Function Call\n" + 
+    auto ret_str =  string(depth, '|') + "Function Call\n" + 
                     func->toString(depth+1);
     for(auto const& arg: args)
     {
@@ -255,7 +272,7 @@ FunctionDefinition::FunctionDefinition(unique_ptr<Node> fun_,
 
 string FunctionDefinition::toString(int depth) const
 {
-    string ret_str = prefix(depth) + "Function Defenition\n" + 
+    string ret_str = string(depth, '|') + "Function Defenition\n" + 
                           fun->toString(depth + 1);
     for(auto const& param: params)
         ret_str += param->toString(depth + 1);
@@ -270,7 +287,7 @@ Hexgrid::Hexgrid(vector<unique_ptr<Node>> cells_)
 
 string Hexgrid::toString(int depth) const
 {
-    string ret_str = prefix(depth) + "Hexgrid\n";
+    string ret_str = string(depth, '|') + "Hexgrid\n";
     for(auto const& cell: cells)
     {
         ret_str += cell->toString(depth + 1);
@@ -286,7 +303,7 @@ HexgridCell::HexgridCell(unique_ptr<Node> value_, unique_ptr<Node> pos_)
 
 string HexgridCell::toString(int depth) const
 {
-    return prefix(depth) + "Hexgrid Cell\n" +
+    return string(depth, '|') + "Hexgrid Cell\n" +
            value->toString(depth + 1) + 
            pos->toString(depth + 1);
 }
@@ -305,15 +322,15 @@ string HexgridExpression::toString(int depth) const
     switch (op)
     {
     case Operator::On:
-        return prefix(depth) + "Hexgrid On Expression\n" +
+        return string(depth, '|') + "Hexgrid On Expression\n" +
                lvalue->toString(depth + 1) +
                rvalue->toString(depth + 1);
     case Operator::By:
-        return prefix(depth) + "Hexgrid By Expression\n" +
+        return string(depth, '|') + "Hexgrid By Expression\n" +
                lvalue->toString(depth + 1) +
                rvalue->toString(depth + 1);
     case Operator::Beside:
-        return prefix(depth) + "Hexgrid Beside Expression\n" +
+        return string(depth, '|') + "Hexgrid Beside Expression\n" +
                lvalue->toString(depth + 1) +
                rvalue->toString(depth + 1);
     default:
@@ -326,12 +343,12 @@ Identifier::Identifier(string value_)
     : value(value_)
 {
 }
-string Identifier::getValue() const {
+string Identifier::getValue() {
     return value;
 }
 string Identifier::toString(int depth) const
 {
-    return prefix(depth) + "Identifier (" + value + ")\n";
+    return string(depth, '|') + "Identifier (" + value + ")\n";
 }
 
 IfStatement::IfStatement(unique_ptr<Node> if_block_,
@@ -345,7 +362,7 @@ IfStatement::IfStatement(unique_ptr<Node> if_block_,
 
 string IfStatement::toString(int depth) const
 {
-    string ret_str = prefix(depth) + "If Statement\n" + 
+    string ret_str = string(depth, '|') + "If Statement\n" + 
                           if_block->toString(depth + 1);
     if (!elif_blocks.empty())
         for(auto const& elif_block: elif_blocks)
@@ -364,7 +381,7 @@ IndexingExpression::IndexingExpression(unique_ptr<Node> indexOn_,
 
 string IndexingExpression::toString(int depth) const
 {
-    return prefix(depth) + "Indexing Expression\n" + 
+    return string(depth, '|') + "Indexing Expression\n" + 
            indexOn->toString(depth + 1) + 
            indexBy->toString(depth + 1);
 }
@@ -377,7 +394,7 @@ IntegerLiteral::IntegerLiteral(int value_)
 
 string IntegerLiteral::toString(int depth) const
 {
-    return prefix(depth) + "Integer Literal (" + to_string(value) + ")\n";
+    return string(depth, '|') + "Integer Literal (" + to_string(value) + ")\n";
 }
 
 Literal::Literal()
@@ -386,7 +403,7 @@ Literal::Literal()
 
 string Literal::toString(int depth) const
 {
-    return prefix(depth) + "Blank literal\n";
+    return string(depth, '|') + "Blank literal\n";
 }
 
 LogicalNegation::LogicalNegation(unique_ptr<Node>  value_)
@@ -396,7 +413,7 @@ LogicalNegation::LogicalNegation(unique_ptr<Node>  value_)
 
 string LogicalNegation::toString(int depth) const
 {
-    return prefix(depth) + "Logical Negation Expression\n" + value->toString(depth + 1);
+    return string(depth, '|') + "Logical Negation Expression\n" + value->toString(depth + 1);
 }
 
 MoveStatement::MoveStatement(unique_ptr<Node> position_source_,
@@ -412,7 +429,7 @@ MoveStatement::MoveStatement(unique_ptr<Node> position_source_,
 
 string MoveStatement::toString(int depth) const
 {
-    return prefix(depth) + "Move Statement\n" +
+    return string(depth, '|') + "Move Statement\n" +
             position_source->toString(depth + 1) + 
             grid_source->toString(depth + 1) + 
             grid_target->toString(depth + 1) + 
@@ -432,7 +449,7 @@ OrExpression::OrExpression(unique_ptr<Node> lvalue_,
 
 string OrExpression::toString(int depth) const
 {
-    return prefix(depth) + "Or Expression\n" +
+    return string(depth, '|') + "Or Expression\n" +
             lvalue->toString(depth + 1) +
             rvalue->toString(depth + 1);
 }
@@ -446,7 +463,7 @@ RemoveStatement::RemoveStatement(unique_ptr<Node> position_,
 
 string RemoveStatement::toString(int depth) const
 {
-    return prefix(depth) + "Remove Statement\n" +
+    return string(depth, '|') + "Remove Statement\n" +
             position->toString(depth + 1) + 
             grid->toString(depth + 1);
 }
@@ -458,7 +475,7 @@ ReturnStatement::ReturnStatement(unique_ptr<Node> expr_)
 
 string ReturnStatement::toString(int depth) const
 {
-    return prefix(depth) + "Return Statement\n" + 
+    return string(depth, '|') + "Return Statement\n" + 
             expr->toString(depth + 1);
 }
 
@@ -469,7 +486,7 @@ Scope::Scope(vector<unique_ptr<Node>> stmnts_)
 
 string Scope::toString(int depth) const
 {
-    string ret_str = prefix(depth) + "Scope\n";
+    string ret_str = string(depth, '|') + "Scope\n";
     for(auto const& stmnt: stmnts)
     {
         ret_str += stmnt->toString(depth + 1);
@@ -491,11 +508,11 @@ string SOArithmExpression::toString(int depth) const
     switch (op)
     {
     case Operator::Add:
-        return prefix(depth) + "Add Expression\n" +
+        return string(depth, '|') + "Add Expression\n" +
                lvalue->toString(depth + 1) +
                rvalue->toString(depth + 1);
     case Operator::Substruct:
-        return prefix(depth) + "Substruct Expression\n" +
+        return string(depth, '|') + "Substruct Expression\n" +
                lvalue->toString(depth + 1) +
                rvalue->toString(depth + 1);
     default:
@@ -507,165 +524,124 @@ string SOArithmExpression::toString(int depth) const
 TextLiteral::TextLiteral(string value_): value(value_){}
 string TextLiteral::toString(int depth) const
 {
-    return prefix(depth) + "Text Literal (" + value + ")\n";
-}
-llvm::Value * AssignmentStatement::accept(AstVisitor &visitor) const {
-    return visitor.getValue(*this);};
-llvm::Value * AddStatement::accept(AstVisitor &visitor) const {
-    return visitor.getValue(*this);
-};
-llvm::Value * ConditionBlock::accept(AstVisitor &visitor) const {
-    return visitor.getValue(*this);
-};
-llvm::Value *DeclarationStatement::accept(AstVisitor &visitor) const {
-    return visitor.getValue(*this);
-};
-llvm::Value * ForeachStatement::accept(AstVisitor &visitor) const {
-    return visitor.getValue(*this);
-};
-llvm::Value * FunctionCall::accept(AstVisitor &visitor) const {
-    return visitor.getValue(*this);
-};
-llvm::Value * FunctionDefinition::accept(AstVisitor &visitor) const {
-    return visitor.getValue(*this);
-};
-llvm::Value * IfStatement::accept(AstVisitor &visitor) const {
-    return visitor.getValue(*this);
-};
-llvm::Value * MoveStatement::accept(AstVisitor &visitor) const {
-    return visitor.getValue(*this);
-};
-llvm::Value * RemoveStatement::accept(AstVisitor &visitor) const {
-    return visitor.getValue(*this);
-};
-llvm::Value * ReturnStatement::accept(AstVisitor &visitor) const {
-    return visitor.getValue(*this);
-};
-llvm::Value * Scope::accept(AstVisitor &visitor) const {
-    return visitor.getValue(*this);
-};
-llvm::Value * OrExpression::accept(AstVisitor &visitor) const {
-    return visitor.getValue(*this);
-};
-llvm::Value * AndExpression::accept(AstVisitor &visitor) const {
-    return visitor.getValue(*this);
-};
-llvm::Value * ComparisonExpression::accept(AstVisitor &visitor) const {
-    return visitor.getValue(*this);
-};
-llvm::Value * HexgridExpression::accept(AstVisitor &visitor) const {
-    return visitor.getValue(*this);
-};
-llvm::Value * SOArithmExpression::accept(AstVisitor &visitor) const {
-    return visitor.getValue(*this);
-};
-llvm::Value * FOArithmExpression::accept(AstVisitor &visitor) const {
-    return visitor.getValue(*this);
-};
-llvm::Value * LogicalNegation::accept(AstVisitor &visitor) const {
-    return visitor.getValue(*this);
-};
-llvm::Value * ArithmeticalNegation::accept(AstVisitor &visitor) const {
-    return visitor.getValue(*this);
-};
-llvm::Value * IndexingExpression::accept(AstVisitor &visitor) const {
-    return visitor.getValue(*this);
-};
-llvm::Value * Literal::accept(AstVisitor &visitor) const {
-    return visitor.getValue(*this);
-};
-llvm::Value * TextLiteral::accept(AstVisitor &visitor) const {
-    return visitor.getValue(*this);
-};
-llvm::Value * IntegerLiteral::accept(AstVisitor &visitor) const {
-    return visitor.getIdentifier(*this);
-};
-llvm::Value * DecimalLiteral::accept(AstVisitor &visitor) const {
-    return visitor.getValue(*this);
-};
-llvm::Value * Hexgrid::accept(AstVisitor &visitor) const {
-    return visitor.getValue(*this);
-};
-llvm::Value * HexgridCell::accept(AstVisitor &visitor) const {
-    return visitor.getValue(*this);
-};
-llvm::Value * Identifier::accept(AstVisitor &visitor) const {
-    return visitor.getValue(*this);
-};
-llvm::Value * Array::accept(AstVisitor &visitor) const {
-    return visitor.getValue(*this);
-};
-
-
-CodeGenVisitor::CodeGenVisitor(LLVMContext &context)
-:TheContext(context){
-    TheModule = make_unique<Module>("hexgrider", TheContext);
-    Builder = make_unique<IRBuilder<>>(TheContext);
+    return string(depth, '|') + "Text Literal (" + value + ")\n";
 }
 
-void CodeGenVisitor::print(){
-    TheModule->print(errs(), nullptr);
-}
-
-Value* CodeGenVisitor::LogErrorV(const char *Str) {
-    throw runtime_error(Str);
-    return nullptr;
-}
-
-Value* CodeGenVisitor::getValue(const DecimalLiteral &dl){
-    return ConstantFP::get(TheContext, APFloat(dl.getValue()));
-}
-string CodeGenVisitor::getIdentifier(const Identifier &id){
-    return id.value;
-}
-
-Value *CodeGenVisitor::getValue(const RemoveStatement &dl){return nullptr;}
-Value *CodeGenVisitor::getValue(const MoveStatement &dl){return nullptr;}
-Value *CodeGenVisitor::getValue(const IfStatement &dl){return nullptr;}
-Value *CodeGenVisitor::getValue(const FunctionDefinition &dl){return nullptr;}
-Value *CodeGenVisitor::getValue(const FunctionCall &dl){return nullptr;}
-Value *CodeGenVisitor::getValue(const ForeachStatement &dl){return nullptr;}
-Value *CodeGenVisitor::getValue(const ConditionBlock &dl){return nullptr;}
-Value *CodeGenVisitor::getValue(const AddStatement &dl){return nullptr;}
-Value *CodeGenVisitor::getValue(const AssignmentStatement &dl){return nullptr;}
-Value *CodeGenVisitor::getValue(const ReturnStatement &dl){return nullptr;}
-Value *CodeGenVisitor::getValue(const Scope &dl){return nullptr;}
-Value *CodeGenVisitor::getValue(const OrExpression &dl){return nullptr;}
-Value *CodeGenVisitor::getValue(const AndExpression &dl){return nullptr;}
-Value *CodeGenVisitor::getValue(const ComparisonExpression &dl){return nullptr;}
-Value *CodeGenVisitor::getValue(const HexgridExpression &dl){return nullptr;}
-Value *CodeGenVisitor::getValue(const SOArithmExpression &dl){return nullptr;}
-Value *CodeGenVisitor::getValue(const FOArithmExpression &dl){return nullptr;}
-Value *CodeGenVisitor::getValue(const LogicalNegation &dl){return nullptr;}
-Value *CodeGenVisitor::getValue(const ArithmeticalNegation &dl){return nullptr;}
-Value *CodeGenVisitor::getValue(const IndexingExpression &dl){return nullptr;}
-Value *CodeGenVisitor::getValue(const Literal &dl){return nullptr;}
-Value *CodeGenVisitor::getValue(const TextLiteral &dl){return nullptr;}
-Value *CodeGenVisitor::getValue(const IntegerLiteral &dl){return nullptr;}
-Value *CodeGenVisitor::getValue(const Hexgrid &dl){return nullptr;}
-Value *CodeGenVisitor::getValue(const HexgridCell &dl){return nullptr;}
-Value *CodeGenVisitor::getValue(const Array &dl){return nullptr;}
-
-Function* CodeGenVisitor::operator()(const Scope &sc){
-    FunctionType *FT = 
-        FunctionType::get(Type::getVoidTy(TheContext), false);
-    Function *F =
-        Function::Create(FT, Function::ExternalLinkage, "Top level", TheModule.get());
-    BasicBlock *BB = BasicBlock::Create(TheContext, "entry", F);
-    Builder->SetInsertPoint(BB);
-    NamedValues.clear();
-
-    if (Value* RetVal = sc.stmnts[0]->accept(*this)){
-        Builder->CreateRet(RetVal);
-        verifyFunction(*F);
-        return F;
+Variable::Variable(Type t, int d): type(t), dimension(d){}
+Variable::Variable():type(Type::Undefiend), dimension(0){}
+int Variable::getInteger(vector<int> index_){
+    if (type != Type::Int){
+        throw runtime_error("Got wrong type");
     }
-    F->eraseFromParent();
-    return nullptr;;
+    if (index_.empty() && dimension==0){
+        return get<int>(value);
+    }
+    auto elem = get<vector<Variable>>(value);
+    auto sub_elem = elem[index_.back()];
+    index_.pop_back();
+    return sub_elem.getInteger(index_);
 }
 
-Value *CodeGenVisitor::getValue(const DeclarationStatement &ds){
-    string name = ds.var->accept(*this);
-    NamedValues[name] = 
+void Variable::setValue(int value_, vector<int> index_){
+    if (type != Type::Int){
+        throw runtime_error("Got wrong type");
+    }
+    if (index_.empty() && !dimension){
+        value = value_;
+        return;
+    }
+    if (index_.size() == dimension){
+        auto elem = get<vector<Variable>>(value);
+        auto sub_elem = elem[index_.back()];
+        index_.pop_back();
+        sub_elem.setValue(value_, index_);
+    }
+}
+
+Variable* Scope::calculate(Scope& sc) {
+    upper_scope = &sc;
+    for(auto const& stmnt : stmnts){
+        stmnt->calculate(*this);
+    }
     return nullptr;
 }
+
+void Scope::declareVariable(string name, ast::Variable var){
+    variables[name] = var;
+}
+
+void Scope::assignVariable(string name, ast::Variable var){
+    Variable var;
+    if (variable.cout(name)){
+        var = variables[name];
+        
+    }
+    if (!variables.count(name))
+    {
+        if (!upper_scope){
+            throw runtime_error("Variable " + name + " assigned before declared\n");
+        }
+        upper_scope->assignVariable(name, var);
+    }
+    if 
+}
+
+Variable* DeclarationStatement::calculate(Scope& scope) {
+    string name = iden->getValue();
+    Variable::Type t; 
+    switch (type){
+        case Type::Int: t = Variable::Type::Int;
+                        break;
+        default:
+            throw runtime_error("Unkowwn type");
+    }
+    Variable v = Variable(t);
+    scope.declareVariable(name, v); 
+    return nullptr;
+}
+
+string DeclarationStatement::getIdentifier(){
+    return iden->getValue();
+}
+
+Variable* AssignmentStatement::calculate(Scope& scope) {
+    string name;
+    if(decl){
+        decl->calculate(scope);
+        name = decl->getIdentifier();
+    } else {
+        name = iden->getValue();
+    }
+    Variable* v = value.calculate(scope);
+    return nullptr;
+}
+
+
+
+Variable* AddStatement::calculate(Scope& scope) {return nullptr;}
+Variable* ConditionBlock::calculate(Scope& scope) {return nullptr;}
+Variable* ForeachStatement::calculate(Scope& scope) {return nullptr;}
+Variable* FunctionCall::calculate(Scope& scope) {return nullptr;}
+Variable* FunctionDefinition::calculate(Scope& scope) {return nullptr;}
+Variable* IfStatement::calculate(Scope& scope) {return nullptr;}
+Variable* MoveStatement::calculate(Scope& scope) {return nullptr;}
+Variable* RemoveStatement::calculate(Scope& scope) {return nullptr;}
+Variable* ReturnStatement::calculate(Scope& scope) {return nullptr;}
+Variable* OrExpression::calculate(Scope& scope) {return nullptr;}
+Variable* AndExpression::calculate(Scope& scope) {return nullptr;}
+Variable* ComparisonExpression::calculate(Scope& scope) {return nullptr;}
+Variable* HexgridExpression::calculate(Scope& scope) {return nullptr;}
+Variable* SOArithmExpression::calculate(Scope& scope) {return nullptr;}
+Variable* FOArithmExpression::calculate(Scope& scope) {return nullptr;}
+Variable* LogicalNegation::calculate(Scope& scope) {return nullptr;}
+Variable* ArithmeticalNegation::calculate(Scope& scope) {return nullptr;}
+Variable* IndexingExpression::calculate(Scope& scope) {return nullptr;}
+Variable* Literal::calculate(Scope& scope) {return nullptr;}
+Variable* TextLiteral::calculate(Scope& scope) {return nullptr;}
+Variable* IntegerLiteral::calculate(Scope& scope) {return nullptr;}
+Variable* DecimalLiteral::calculate(Scope& scope) {return nullptr;}
+Variable* Hexgrid::calculate(Scope& scope) {return nullptr;}
+Variable* HexgridCell::calculate(Scope& scope) {return nullptr;}
+Variable* Identifier::calculate(Scope& scope) {return nullptr;}
+Variable* Array::calculate(Scope& scope) {return nullptr;}
+

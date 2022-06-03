@@ -95,14 +95,21 @@ std::unique_ptr<Node> Parser::readFunctionCall(std::unique_ptr<ast::Node> func)
     return std::make_unique<FunctionCall>(std::move(func), std::move(args));
 }
 
-std::unique_ptr<Node> Parser::readAssignment(std::unique_ptr<ast::Node> lvalue)
+std::unique_ptr<Node> Parser::readAssignment(std::unique_ptr<ast::Identifier> lvalue)
 {
     requireToken(Token::Type::Operator, "=");
     advance();
     return std::make_unique<AssignmentStatement>(std::move(lvalue), readExpression());
 }
 
-std::unique_ptr<Node> Parser::readDeclr()
+std::unique_ptr<Node> Parser::readAssignment(std::unique_ptr<ast::DeclarationStatement> lvalue)
+{
+    requireToken(Token::Type::Operator, "=");
+    advance();
+    return std::make_unique<AssignmentStatement>(std::move(lvalue), readExpression());
+}
+
+std::unique_ptr<DeclarationStatement> Parser::readDeclr()
 {
     requireToken(Token::Type::Type);
     DeclarationStatement::Type t;
@@ -483,7 +490,7 @@ std::unique_ptr<Node> Parser::readIntegerLiteral()
     return std::make_unique<IntegerLiteral>(val);
 }
 
-std::unique_ptr<Node> Parser::readIdentifier()
+std::unique_ptr<Identifier> Parser::readIdentifier()
 {
     const auto val = requireToken(Token::Type::Identifier).getText();
     advance();

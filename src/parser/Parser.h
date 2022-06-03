@@ -28,8 +28,9 @@ public:
     std::unique_ptr<ast::Node> readStatement();
     std::unique_ptr<ast::Node> readDeclrOrInit();
     std::unique_ptr<ast::Node> readFuncCallOrAssignment();
-    std::unique_ptr<ast::Node> readDeclr();
-    std::unique_ptr<ast::Node> readAssignment(std::unique_ptr<ast::Node>);
+    std::unique_ptr<ast::DeclarationStatement> readDeclr();
+    std::unique_ptr<ast::Node> readAssignment(std::unique_ptr<ast::DeclarationStatement>);
+    std::unique_ptr<ast::Node> readAssignment(std::unique_ptr<ast::Identifier>);
     std::unique_ptr<ast::Node> readFunctionCall(std::unique_ptr<ast::Node>);
     std::unique_ptr<ast::Node> readIfStatement();
     std::unique_ptr<ast::Node> readForeachStatement();
@@ -58,7 +59,7 @@ public:
     std::unique_ptr<ast::Node> readTextLiteral();
     std::unique_ptr<ast::Node> readDecimalLiteral();
     std::unique_ptr<ast::Node> readIntegerLiteral();
-    std::unique_ptr<ast::Node> readIdentifier();
+    std::unique_ptr<ast::Identifier> readIdentifier();
     std::unique_ptr<ast::Node> readIdentifierOrFuncCall();
     std::unique_ptr<ast::Node> readArray();
     std::unique_ptr<ast::Node> readHexgrid();
