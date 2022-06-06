@@ -7,96 +7,154 @@
 #include <vector>
 #include <variant>
 #include <iostream>
+#include <HexgridErrors.h>
+
 namespace ast
 {
+
 class Node;
-class Scope;
 
-class Variable{
+class AstVisitor
+{
 public:
-    enum class Type{
-        Int,
-        String,
-        Float,
-        Hexgrid,
-        Undefiend
-    };
-
-    Variable();
-    Variable(Type, int = 0);
-
-
-    int getInteger(std::vector<int> = {});
-    double getFloat(std::vector<int> = {});
-    std::string getString(std::vector<int> = {});
-    std::vector<Variable> getArray(std::vector<int> = {});
-
-    Type getType() const {return type;};
-
-    void setValue(int, std::vector<int> = {});
-    void setValue(double, std::vector<int> = {});
-    void setValue(std::string, std::vector<int> = {});
-
-    Type type;
-    int dimension;
-    std::variant<int, double, std::string, std::vector<Variable>> value;
-
+    virtual void visit(Node&) {throw std::runtime_error("visit is not implemented");}
 };
+
+
 class Node
 {
 public:
     virtual ~Node();
     virtual std::string toString(int depth = 0) const = 0;
-    virtual Variable* calculate(Scope&) = 0;
+    virtual void accept(AstVisitor& v) {throw std::runtime_error("accept not implemented");}
+    // virtual Variable* calculate(StatementBlock&) = 0;
 };
 
-class Scope : public Node
+class Variable
 {
 public:
-    Scope(std::vector<std::unique_ptr<ast::Node>> stmnts_);
-    ~Scope(){};
+    enum class Type
+    {
+        Int,
+        Float,
+        String,
+        Hexgrid,
+        Array
+    };
+    Variable();
+    Variable(Type);
+    Variable(Type, int);
+    static std::string typeToString(Type);
+    std::string typeToString();
+    int getIntValue(std::string);
+    // double getDoubleValue(std::string);
+    // std::string getStringValue(std::string);
+private:
+    Type type;
+    std::variant<int, double, std::string> value;
 
-    std::string toString(int depth = 0) const override;
-    std::vector<std::unique_ptr<ast::Node>> stmnts;
-    ast::Scope* upper_scope;
-    std::map<std::string, ast::Variable> variables;
-    // std::map<std::string, ast::Node> functions;
-    Variable* calculate(Scope&) override;
-
-    void declareVariable(std::string name, ast::Variable var);
-    void assignVariable(std::string name, ast::Variable var);
 };
 
-/*----------------------------------*/
-/*          Unary Expressions       */
-/*----------------------------------*/
+
+class VariableDeclarationStatement : public Node
+{
+public:
+    VariableDeclarationStatement(Variable::Type type_, std::string id_, int dimenstion_=0);
+    ~VariableDeclarationStatement(){};
+
+    std::string toString(int depth = 0) const override;
+    std::string getType() const;
+    std::string toString(Variable::Type type_) const;
+    // std::string getIdentifier();
+
+    // Variable* calculate(StatementBlock&) override;
+
+    Variable::Type type;
+    std::string identifier;
+    int dimension;
+};
+
+class FunctionDefinition : public Node
+{
+public:
+    FunctionDefinition( 
+                Variable::Type,
+                std::string,
+                std::vector<std::unique_ptr<VariableDeclarationStatement>>,
+                std::unique_ptr<Node>,
+                std::pair<int, int>, std::pair<int, int>);
+    ~FunctionDefinition(){};
+
+    std::string toString(int depth = 0) const override;
+    
+    Variable::Type type;
+    std::string name;
+    std::vector<std::unique_ptr<VariableDeclarationStatement>> params;
+    std::unique_ptr<Node> statementBlock;
+    std::pair<int, int> startLoc;
+    std::pair<int, int> endLoc;
+    // Variable* calculate(StatementBlock&) override;
+};
+
+class Program : public Node
+{
+public:
+    Program();
+    ~Program(){};
+    void insertStatement(std::unique_ptr<Node>);    
+    void insertFunction(std::unique_ptr<FunctionDefinition>);    
+    std::string toString(int depth = 0) const override;
+    virtual void accept(AstVisitor& v) override {v.visit(*this);}
+    
+    std::vector<std::unique_ptr<Node>> stmnts;
+    std::map<std::string, std::unique_ptr<FunctionDefinition>> funcs;
+    // std::vector<std::unique_ptr<FunctionDefinition>> funcs;
+};
+
+class StatementBlock : public Node
+{
+public:
+    StatementBlock(std::vector<std::unique_ptr<Node>>);
+    ~StatementBlock(){};
+
+    std::string toString(int depth = 0) const override;
+    std::vector<std::unique_ptr<Node>> stmnts;
+    // std::vector<std::unique_ptr<FunctionDefinition> funcDefs;
+    // std::vector<std::unique_ptr<Vara> funcDefs;
+    // std::vector<std::unique_ptr<Node>> stmnts;
+    // std::map<std::string, Variable> variables;
+    // std::map<std::string, Node> functions;
+    // Variable* calculate(StatementBlock&) override;
+
+    // void declareVariable(std::string name, Variable var);
+    // void assignVariable(std::string name, Variable var);
+};
 
 class FunctionCall : public Node
 {
 public:
-    FunctionCall(std::unique_ptr<Node> func_, 
-                 std::vector<std::unique_ptr<ast::Node>> args_);
+    FunctionCall(std::string, std::vector<std::unique_ptr<Node>>);
     ~FunctionCall(){};
 
     std::string toString(int depth = 0) const override;
 
-    std::unique_ptr<Node> func;
-    std::vector<std::unique_ptr<ast::Node>> args;
-    Variable* calculate(Scope&) override;
+    std::string funcName;
+    std::vector<std::unique_ptr<Node>> args;
+    // Variable* calculate(StatementBlock&) override;
 };
 
 
-class Identifier : public Node
+class VariableReference : public Node
 {
 public:
-    Identifier(std::string value_);
-    ~Identifier(){};
+    VariableReference(std::string);
+    ~VariableReference(){};
 
     std::string toString(int depth = 0) const override;
     std::string getValue();
-    Variable* calculate(Scope&) override;
+    // VariableReference* calculate(StatementBlock&) override;
 private:
-    std::string value;
+    std::string name;
 };
 
 
@@ -107,7 +165,7 @@ public:
     Literal();
     ~Literal(){};
     std::string toString(int depth = 0) const override;
-    Variable* calculate(Scope&) override;
+    // Variable* calculate(StatementBlock&) override;
 };
 
 
@@ -119,7 +177,7 @@ public:
 
     std::string toString(int depth = 0) const override;
     std::string value;
-    Variable* calculate(Scope&) override;
+    // Variable* calculate(StatementBlock&) override;
 };
 
 
@@ -131,7 +189,7 @@ public:
 
     std::string toString(int depth = 0) const override;
     int value;
-    Variable* calculate(Scope&) override;
+    // Variable* calculate(StatementBlock&) override;
 };
 
 
@@ -142,7 +200,7 @@ public:
     ~DecimalLiteral(){};
     std::string toString(int depth = 0) const override;
     double getValue() const;
-    Variable* calculate(Scope&) override;
+    // Variable* calculate(StatementBlock&) override;
 private:
     double value;
 };
@@ -151,12 +209,12 @@ private:
 class Hexgrid : public Node
 {
 public:
-    Hexgrid(std::vector<std::unique_ptr<ast::Node>> cells_);
+    Hexgrid(std::vector<std::unique_ptr<Node>> cells_);
     ~Hexgrid(){};
 
     std::string toString(int depth = 0) const override;
-    std::vector<std::unique_ptr<ast::Node>> cells;
-    Variable* calculate(Scope&) override;
+    std::vector<std::unique_ptr<Node>> cells;
+    // Variable* calculate(StatementBlock&) override;
 };
 
 
@@ -168,145 +226,167 @@ public:
     ~HexgridCell(){};
 
     std::string toString(int depth = 0) const override;
-    std::unique_ptr<ast::Node> pos;
-    std::unique_ptr<ast::Node> value;
-    Variable* calculate(Scope&) override;
+    std::unique_ptr<Node> pos;
+    std::unique_ptr<Node> value;
+    // Variable* calculate(StatementBlock&) override;
 };
 
 
 class Array : public Node
 {
 public:
-    Array(std::vector<std::unique_ptr<ast::Node>> elements_);
+    Array(std::vector<std::unique_ptr<Node>> elements_);
     ~Array(){};
 
     std::string toString(int depth = 0) const override;
-    std::vector<std::unique_ptr<ast::Node>> elements;
-    Variable* calculate(Scope&) override;
+    std::vector<std::unique_ptr<Node>> elements;
+    // Variable* calculate(StatementBlock&) override;
 };
 
 /*------------------------------*/
 /*          Expressions         */
 /*------------------------------*/
 
-
-class OrExpression : public Node
+class BinaryExpression : public Node
 {
-public:
-    OrExpression(std::unique_ptr<Node> lvalue_,
-                 std::unique_ptr<Node> rvalue_);
-    ~OrExpression(){};
-
-    std::string toString(int depth = 0) const override;
+    public:
+     BinaryExpression(std::unique_ptr<Node> lvalue_,
+                      std::unique_ptr<Node> rvalue_);
+    ~BinaryExpression(){};
+    virtual std::string toString(int depth = 0) const;
     std::unique_ptr<Node> lvalue;
     std::unique_ptr<Node> rvalue;
-    Variable* calculate(Scope&) override;
+};
+
+class OrExpression : public BinaryExpression
+{
+public:
+    using BinaryExpression::BinaryExpression;
+    std::string toString(int depth = 0) const override;
+    // Variable* calculate(StatementBlock&) override;
 };
 
 
-class AndExpression : public Node
+class AndExpression : public BinaryExpression
 {
 public:
-    AndExpression(std::unique_ptr<Node> lvalue_,
-                       std::unique_ptr<Node> rvalue_);
-    ~AndExpression(){};
-
+    using BinaryExpression::BinaryExpression;
     std::string toString(int depth = 0) const override;
-    std::unique_ptr<Node> lvalue;
-    std::unique_ptr<Node> rvalue;
-    Variable* calculate(Scope&) override;
+    // Variable* calculate(StatementBlock&) override;
 };
 
-
-class ComparisonExpression : public Node
+class LessExpression : public BinaryExpression
 {
 public:
-    enum class Operator
-    {
-        Less,
-        LessOrEqual,
-        Greater,
-        GreaterOrEqual,
-        Equal,
-        NotEqual
-    };
-    ComparisonExpression(std::unique_ptr<Node> lvalue_,
-                       Operator op_,
-                       std::unique_ptr<Node> rvalue_);
-    ~ComparisonExpression(){};
-
+    using BinaryExpression::BinaryExpression;
     std::string toString(int depth = 0) const override;
-    std::string toString(Operator op_)  const;
-    std::unique_ptr<Node> lvalue;
-    Operator op;
-    std::unique_ptr<Node> rvalue;
-    Variable* calculate(Scope&) override;
+    // Variable* calculate(StatementBlock&) override;
 };
 
-
-class HexgridExpression : public Node
+class LessOrEqualExpression : public BinaryExpression
 {
 public:
-    enum class Operator
-    {
-        On,
-        By,
-        Beside
-    };
-    HexgridExpression(std::unique_ptr<Node> lvalue_,
-                       Operator op_,
-                       std::unique_ptr<Node> rvalue_);
-    ~HexgridExpression(){};
-
+    using BinaryExpression::BinaryExpression;
     std::string toString(int depth = 0) const override;
-    std::unique_ptr<Node> lvalue;
-    Operator op;
-    std::unique_ptr<Node> rvalue;
-    Variable* calculate(Scope&) override;
+    // Variable* calculate(StatementBlock&) override;
 };
 
-
-class SOArithmExpression : public Node
+class GreaterExpression : public BinaryExpression
 {
 public:
-    enum class Operator
-    {
-        Add,
-        Substruct
-    };
-    SOArithmExpression(std::unique_ptr<Node> lvalue_,
-                       Operator op_,
-                       std::unique_ptr<Node> rvalue_);
-    ~SOArithmExpression(){};
-
+    using BinaryExpression::BinaryExpression;
     std::string toString(int depth = 0) const override;
-    std::unique_ptr<Node> lvalue;
-    Operator op;
-    std::unique_ptr<Node> rvalue;
-    Variable* calculate(Scope&) override;
+    // Variable* calculate(StatementBlock&) override;
 };
 
-
-class FOArithmExpression : public Node
+class GreaterOrEqualExpression : public BinaryExpression
 {
 public:
-    enum class Operator
-    {
-        Multiply,
-        Divide
-    };
-    FOArithmExpression(std::unique_ptr<Node> lvalue_,
-                       Operator op_,
-                       std::unique_ptr<Node> rvalue_);
-    ~FOArithmExpression(){};
-
+    using BinaryExpression::BinaryExpression;
     std::string toString(int depth = 0) const override;
-    std::unique_ptr<Node> lvalue;
-    Operator op;
-    std::unique_ptr<Node> rvalue;
-    Variable* calculate(Scope&) override;
+    // Variable* calculate(StatementBlock&) override;
 };
 
+class EqualExpression : public BinaryExpression
+{
+public:
+    using BinaryExpression::BinaryExpression;
+    std::string toString(int depth = 0) const override;
+    // Variable* calculate(StatementBlock&) override;
+};
+
+class NotEqualExpression : public BinaryExpression
+{
+public:
+    using BinaryExpression::BinaryExpression;
+    std::string toString(int depth = 0) const override;
+    // Variable* calculate(StatementBlock&) override;
+};
+
+class BesideExpression : public BinaryExpression
+{
+public:
+    using BinaryExpression::BinaryExpression;
+    std::string toString(int depth = 0) const override;
+    // Variable* calculate(StatementBlock&) override;
+};
+
+class ByExpression : public BinaryExpression
+{
+public:
+
+    using BinaryExpression::BinaryExpression;
+    std::string toString(int depth = 0) const override;
+    // Variable* calculate(StatementBlock&) override;
+};
+
+class OnExpression : public BinaryExpression
+{
+public:
+    using BinaryExpression::BinaryExpression;
+    std::string toString(int depth = 0) const override;
+    // Variable* calculate(StatementBlock&) override;
+};
+
+class AddExpression : public BinaryExpression
+{
+public:
+    using BinaryExpression::BinaryExpression;
+    std::string toString(int depth = 0) const override;
+    // Variable* calculate(StatementBlock&) override;
+};
+
+class SubtructExpression : public BinaryExpression
+{
+public:
+    using BinaryExpression::BinaryExpression;
+    std::string toString(int depth = 0) const override;
+    // Variable* calculate(StatementBlock&) override;
+};
+
+class MultiplyExpression : public BinaryExpression
+{
+public:
+    using BinaryExpression::BinaryExpression;
+    std::string toString(int depth = 0) const override;
+    // Variable* calculate(StatementBlock&) override;
+};
+
+class DivideExpression : public BinaryExpression
+{
+public:
+    using BinaryExpression::BinaryExpression;
+    std::string toString(int depth = 0) const override;
+    // Variable* calculate(StatementBlock&) override;
+};
+
+class ModuloExpression : public BinaryExpression
+{
+public:
+    using BinaryExpression::BinaryExpression;
+    std::string toString(int depth = 0) const override;
+    // Variable* calculate(StatementBlock&) override;
+};
 
 class LogicalNegation : public Node
 {
@@ -315,7 +395,7 @@ public:
     ~LogicalNegation(){};
 
     std::string toString(int depth = 0) const override;
-    Variable* calculate(Scope&) override;
+    // Variable* calculate(StatementBlock&) override;
     std::unique_ptr<Node> value;
 };
 
@@ -328,70 +408,60 @@ public:
 
     std::string toString(int depth = 0) const override;
     std::unique_ptr<Node> value;
-    Variable* calculate(Scope&) override;
+    // Variable* calculate(StatementBlock&) override;
 };
 
 
 class IndexingExpression : public Node
 {
 public:
-    IndexingExpression(std::unique_ptr<ast::Node> indexOn_,
-                       std::unique_ptr<ast::Node> indexBy_);
+    IndexingExpression(std::unique_ptr<Node> indexOn_,
+                       std::unique_ptr<Node> indexBy_);
     ~IndexingExpression(){};
 
     std::string toString(int depth = 0) const override;
 
-    std::unique_ptr<ast::Node> indexOn;
-    std::unique_ptr<ast::Node> indexBy;
-    Variable* calculate(Scope&) override;
+    std::unique_ptr<Node> indexOn;
+    std::unique_ptr<Node> indexBy;
+    // Variable* calculate(StatementBlock&) override;
 };
 
 /*---------------------------------------*/
 /*              Statements               */
 /*---------------------------------------*/
 
-class DeclarationStatement : public Node
-{
-public:
-    enum class Type
-    {
-        Int,
-        Float,
-        String,
-        Hexgrid
-    };
-    DeclarationStatement(Type type_, std::unique_ptr<Identifier> var_, int dimenstion_=0);
-    ~DeclarationStatement(){};
-
-    std::string toString(int depth = 0) const override;
-    std::string getType() const;
-    std::string toString(Type type_) const;
-    std::string getIdentifier();
-
-    Variable* calculate(Scope&) override;
-
-    Type type;
-    std::unique_ptr<Identifier> iden;
-    int dimenstion;
-};
 
 class AssignmentStatement : public Node
 {
 public:
-    AssignmentStatement(std::unique_ptr<DeclarationStatement> declr_, 
-                        std::unique_ptr<Node> value_);
-    AssignmentStatement(std::unique_ptr<Identifier> iden_, 
+    AssignmentStatement(std::string iden_, 
                         std::unique_ptr<Node> value_);
     ~AssignmentStatement(){};
 
     std::string toString(int depth = 0) const override;
 
-    std::unique_ptr<DeclarationStatement> decl;
-    std::unique_ptr<Identifier> iden;
+    std::string iden;
     std::unique_ptr<Node> value;
-    Variable* calculate(Scope&) override;
+    // Variable* calculate(StatementBlock&) override;
 };
 
+
+class InitializationStatement : public Node
+{
+public:
+    InitializationStatement(Variable::Type, std::string, std::unique_ptr<Node>, int);
+    ~InitializationStatement(){};
+
+    std::string toString(int depth = 0) const override;
+    std::string toString(Variable::Type) const;
+    std::string getType() const;
+
+    Variable::Type type;
+    std::string name;
+    std::unique_ptr<Node> value;
+    int dimension;
+    // Variable* calculate(StatementBlock&) override;
+};
 
 class AddStatement : public Node
 {
@@ -403,24 +473,23 @@ public:
     ~AddStatement(){};
 
     std::string toString(int depth = 0) const override;
-    std::unique_ptr<ast::Node> being_added;
-    std::unique_ptr<ast::Node> added_to;
-    std::unique_ptr<ast::Node> added_at;
-    Variable* calculate(Scope&) override;
+    std::unique_ptr<Node> being_added;
+    std::unique_ptr<Node> added_to;
+    std::unique_ptr<Node> added_at;
+    // Variable* calculate(StatementBlock&) override;
 };
 
 
 class ConditionBlock : public Node
 {
 public:
-    ConditionBlock(std::unique_ptr<Node> condition_,
-            std::unique_ptr<Node> scope_);
+    ConditionBlock(std::unique_ptr<Node>,std::unique_ptr<Node>);
     ~ConditionBlock(){};
 
     std::string toString(int depth = 0) const override;
-    std::unique_ptr<ast::Node> condition;
-    std::unique_ptr<ast::Node> scope;
-    Variable* calculate(Scope&) override;
+    std::unique_ptr<Node> condition;
+    std::unique_ptr<Node> statementBlock;
+    // Variable* calculate(StatementBlock&) override;
 };
 
 
@@ -430,30 +499,14 @@ public:
     ForeachStatement( 
                 std::unique_ptr<Node> iterator_,
                 std::unique_ptr<Node> iterated_,
-                std::unique_ptr<Node> scope_);
+                std::unique_ptr<Node> statementBlock_);
     ~ForeachStatement(){};
 
     std::string toString(int depth = 0) const override;
-    std::unique_ptr<ast::Node> iterator;
-    std::unique_ptr<ast::Node> iterated;
-    std::unique_ptr<ast::Node> scope;
-    Variable* calculate(Scope&) override;
-};
-
-class FunctionDefinition : public Node
-{
-public:
-    FunctionDefinition( 
-                std::unique_ptr<Node> fun_,
-                std::vector<std::unique_ptr<ast::Node>> params_,
-                std::unique_ptr<Node> scope_);
-    ~FunctionDefinition(){};
-
-    std::string toString(int depth = 0) const override;
-    std::unique_ptr<ast::Node> fun;
-    std::vector<std::unique_ptr<ast::Node>> params;
-    std::unique_ptr<ast::Node> scope;
-    Variable* calculate(Scope&) override;
+    std::unique_ptr<Node> iterator;
+    std::unique_ptr<Node> iterated;
+    std::unique_ptr<Node> statementBlock;
+    // Variable* calculate(StatementBlock&) override;
 };
 
 class IfStatement : public Node
@@ -461,15 +514,15 @@ class IfStatement : public Node
 public:
     IfStatement( 
                 std::unique_ptr<Node> if_block_,
-                std::vector<std::unique_ptr<ast::Node>> elif_blocks_,
+                std::vector<std::unique_ptr<Node>> elif_blocks_,
                 std::unique_ptr<Node> else_block_);
     ~IfStatement(){};
 
     std::string toString(int depth = 0) const override;
-    std::unique_ptr<ast::Node> if_block;
-    std::unique_ptr<ast::Node> else_block;
-    std::vector<std::unique_ptr<ast::Node>> elif_blocks;
-    Variable* calculate(Scope&) override;
+    std::unique_ptr<Node> if_block;
+    std::unique_ptr<Node> else_block;
+    std::vector<std::unique_ptr<Node>> elif_blocks;
+    // Variable* calculate(StatementBlock&) override;
 };
 
 
@@ -487,7 +540,7 @@ public:
     std::unique_ptr<Node> position_target;
     std::unique_ptr<Node> grid_source;
     std::unique_ptr<Node> grid_target;
-    Variable* calculate(Scope&) override;
+    // Variable* calculate(StatementBlock&) override;
 };
 
 
@@ -501,7 +554,7 @@ public:
     std::string toString(int depth = 0) const override;
     std::unique_ptr<Node> position;
     std::unique_ptr<Node> grid;
-    Variable* calculate(Scope&) override;
+    // Variable* calculate(StatementBlock&) override;
 };
 
 
@@ -512,13 +565,9 @@ public:
     ~ReturnStatement(){};
 
     std::string toString(int depth = 0) const override;
-    std::unique_ptr<ast::Node> expr;
-    Variable* calculate(Scope&) override;
+    std::unique_ptr<Node> expr;
+    // Variable* calculate(StatementBlock&) override;
 };
-
-
-
-
 } // namespace ast
 
 #endif // TKOM_AST_H

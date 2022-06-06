@@ -1,3 +1,4 @@
+#include "HexgridErrors.h"
 #include "parser/Parser.h"
 #include <lexer/Lexer.h>
 #include <sstream>
@@ -9,19 +10,27 @@ using namespace token;
 
 struct ParserTestsFixture
 {
+    class TestParser : public Parser{
+        public:
+            using Parser::Parser;
+            std::unique_ptr<Node> parseExpression(){
+                advance();
+                return readExpression();
+            }
+    };
+
     std::unique_ptr<Node> result;
     void parse(const std::string& str)
     {
         std::istringstream in(str);
-        Parser p(std::make_unique<Lexer>(in));
+        TestParser p(std::make_unique<Lexer>(in));
         result = p.parse();
     }
     void parseExpression(const std::string& str)
     {
         std::istringstream in(str);
-        Parser p(std::make_unique<Lexer>(in));
-        p.advance();
-        result = p.readExpression();
+        TestParser p(std::make_unique<Lexer>(in));
+        result = p.parseExpression();
     }
 };
 
@@ -54,24 +63,22 @@ BOOST_AUTO_TEST_CASE(reads_expression_with_text_literal)
 
 BOOST_AUTO_TEST_CASE(reads_expression_with_identifier)
 {
-    parseExpression("foo");
-    BOOST_CHECK_EQUAL(result->toString(), "Identifier (foo)\n");
+    parseExpression("boo");
+    BOOST_CHECK_EQUAL(result->toString(), "Variable reference (boo)\n");
 }
 
 BOOST_AUTO_TEST_CASE(reads_expression_with_function_call_without_args)
 {
     parseExpression("foo()");
-    BOOST_CHECK_EQUAL(result->toString(), "Function Call\n"
-                                          "|Identifier (foo)\n");
+    BOOST_CHECK_EQUAL(result->toString(), "Function Call (foo)\n");
 }
 
 BOOST_AUTO_TEST_CASE(reads_expression_with_function_call_with_args)
 {
     parseExpression("foo(a, b)");
-    BOOST_CHECK_EQUAL(result->toString(), "Function Call\n"
-                                          "|Identifier (foo)\n"
-                                          "|Identifier (a)\n"
-                                          "|Identifier (b)\n");
+    BOOST_CHECK_EQUAL(result->toString(), "Function Call (foo)\n"
+                                          "|Variable reference (a)\n"
+                                          "|Variable reference (b)\n");
 }
 
 
@@ -131,7 +138,7 @@ BOOST_AUTO_TEST_CASE(reads_indexing_expression)
     parseExpression("foo[0]");
     BOOST_CHECK_EQUAL(result->toString(), 
                       "Indexing Expression\n"
-                      "|Identifier (foo)\n"
+                      "|Variable reference (foo)\n"
                       "|Integer Literal (0)\n");
     
 }
@@ -143,7 +150,7 @@ BOOST_AUTO_TEST_CASE(reads_multiple_indexing_expression)
                       "Indexing Expression\n"
                       "|Indexing Expression\n"
                       "||Indexing Expression\n"
-                      "|||Identifier (foo)\n"
+                      "|||Variable reference (foo)\n"
                       "|||Integer Literal (0)\n"
                       "||Integer Literal (1)\n"
                       "|Integer Literal (2)\n");
@@ -163,7 +170,7 @@ BOOST_AUTO_TEST_CASE(reads_logical_negation_with_identifier_expression)
     parseExpression("! is_something");
     BOOST_CHECK_EQUAL(result->toString(), 
                       "Logical Negation Expression\n"
-                      "|Identifier (is_something)\n");
+                      "|Variable reference (is_something)\n");
     
 }
 
@@ -190,6 +197,15 @@ BOOST_AUTO_TEST_CASE(reads_first_order_arithmetical_expression_devide)
     parseExpression("10 / 3");
     BOOST_CHECK_EQUAL(result->toString(), 
                       "Divide Expression\n"
+                      "|Integer Literal (10)\n"
+                      "|Integer Literal (3)\n");
+}
+
+BOOST_AUTO_TEST_CASE(reads_first_order_arithmetical_expression_modulo)
+{
+    parseExpression("10 % 3");
+    BOOST_CHECK_EQUAL(result->toString(), 
+                      "Modulo Expression\n"
                       "|Integer Literal (10)\n"
                       "|Integer Literal (3)\n");
 }
@@ -254,7 +270,7 @@ BOOST_AUTO_TEST_CASE(reads_hexgrid_expression_on)
     parseExpression("my_hexgrid on [1, 2, 3]");
     BOOST_CHECK_EQUAL(result->toString(), 
                       "Hexgrid On Expression\n"
-                      "|Identifier (my_hexgrid)\n"
+                      "|Variable reference (my_hexgrid)\n"
                       "|Array of length (3)\n"
                       "||Integer Literal (1)\n"
                       "||Integer Literal (2)\n"
@@ -266,7 +282,7 @@ BOOST_AUTO_TEST_CASE(reads_hexgrid_expression_by)
     parseExpression("my_hexgrid by \"cell name\"");
     BOOST_CHECK_EQUAL(result->toString(), 
                       "Hexgrid By Expression\n"
-                      "|Identifier (my_hexgrid)\n"
+                      "|Variable reference (my_hexgrid)\n"
                       "|Text Literal (cell name)\n");
 }
 
@@ -275,12 +291,24 @@ BOOST_AUTO_TEST_CASE(reads_hexgrid_expression_beside)
     parseExpression("my_hexgrid beside [3, 3, 3]");
     BOOST_CHECK_EQUAL(result->toString(), 
                       "Hexgrid Beside Expression\n"
-                      "|Identifier (my_hexgrid)\n"
+                      "|Variable reference (my_hexgrid)\n"
                       "|Array of length (3)\n"
                       "||Integer Literal (3)\n"
                       "||Integer Literal (3)\n"
                       "||Integer Literal (3)\n");
 }
+
+BOOST_AUTO_TEST_CASE(reads_hexgrid_from_right_to_left)
+{
+    parseExpression("my_hexgrid beside my_hexgrid by \"red\"");
+    BOOST_CHECK_EQUAL(result->toString(), 
+                      "Hexgrid Beside Expression\n"
+                      "|Variable reference (my_hexgrid)\n" 
+                      "|Hexgrid By Expression\n"
+                      "||Variable reference (my_hexgrid)\n"
+                      "||Text Literal (red)\n");
+}
+
 
 BOOST_AUTO_TEST_CASE(reads_comparison_expression_less)
 {
@@ -291,7 +319,7 @@ BOOST_AUTO_TEST_CASE(reads_comparison_expression_less)
                       "|Integer Literal (3)\n");
 }
 
-BOOST_AUTO_TEST_CASE(reads_comparison_expression_less_or_equalt)
+BOOST_AUTO_TEST_CASE(reads_comparison_expression_less_or_equal)
 {
     parseExpression("11 <= 3");
     BOOST_CHECK_EQUAL(result->toString(), 
@@ -389,7 +417,7 @@ BOOST_AUTO_TEST_CASE(reads_full_expression_tree)
                       "||Equal Expression\n"
                       "|||Text Literal (word)\n"
                       "|||Hexgrid By Expression\n"
-                      "||||Identifier (hexgrid_id)\n"
+                      "||||Variable reference (hexgrid_id)\n"
                       "||||Add Expression\n"
                       "|||||Integer Literal (3)\n"
                       "|||||Multiply Expression\n"
@@ -405,30 +433,23 @@ BOOST_AUTO_TEST_CASE(reads_script_with_variable_declaration)
 {
     parse("int foo;");
     BOOST_CHECK_EQUAL(result->toString(), 
-                      "Scope\n"
-                      "|Declaration\n"
-                      "||Variable Type (int)\n"
-                      "||Identifier (foo)\n");
+                      "Program\n"
+                      "|Variable Declaration (int foo)\n");
 }
 BOOST_AUTO_TEST_CASE(reads_script_with_array_variable_declaration)
 {
-    parse("int[][] foo;");
+    parse("array foo;");
     BOOST_CHECK_EQUAL(result->toString(), 
-                      "Scope\n"
-                      "|Declaration\n"
-                      "||Variable Type (2d array of type int)\n"
-                      "||Identifier (foo)\n");
+                      "Program\n"
+                      "|Variable Declaration (array foo)\n");
 }
 
 BOOST_AUTO_TEST_CASE(reads_script_with_variable_init)
 {
     parse("int foo = 30;");
     BOOST_CHECK_EQUAL(result->toString(), 
-                      "Scope\n"
-                      "|Assignment\n"
-                      "||Declaration\n"
-                      "|||Variable Type (int)\n"
-                      "|||Identifier (foo)\n"
+                      "Program\n"
+                      "|Initialization (int foo)\n"
                       "||Integer Literal (30)\n");
 }
 
@@ -436,9 +457,8 @@ BOOST_AUTO_TEST_CASE(reads_script_with_assignment)
 {
     parse("foo = 30;");
     BOOST_CHECK_EQUAL(result->toString(), 
-                      "Scope\n"
-                      "|Assignment\n"
-                      "||Identifier (foo)\n"
+                      "Program\n"
+                      "|Assignment (foo)\n"
                       "||Integer Literal (30)\n");
 }
 
@@ -446,18 +466,16 @@ BOOST_AUTO_TEST_CASE(reads_script_with_function_call_without_args)
 {
     parse("foo();");
     BOOST_CHECK_EQUAL(result->toString(), 
-                      "Scope\n"
-                      "|Function Call\n"
-                      "||Identifier (foo)\n");
+                      "Program\n"
+                      "|Function Call (foo)\n");
 }
 
 BOOST_AUTO_TEST_CASE(reads_script_with_function_call_with_args)
 {
     parse("foo(1, 2.30, \"Hello\");");
     BOOST_CHECK_EQUAL(result->toString(), 
-                      "Scope\n"
-                      "|Function Call\n"
-                      "||Identifier (foo)\n"
+                      "Program\n"
+                      "|Function Call (foo)\n"
                       "||Integer Literal (1)\n"
                       "||Decimal Literal (" + std::to_string(double(2.30)) + ")\n"
                       "||Text Literal (Hello)\n");
@@ -467,125 +485,106 @@ BOOST_AUTO_TEST_CASE(reads_script_with_if_statement)
 {
     parse("if (1 > 0) { int foo; }");
     BOOST_CHECK_EQUAL(result->toString(), 
-                      "Scope\n"
+                      "Program\n"
                       "|If Statement\n"
                       "||Condition Block\n"
                       "|||Greater Expression\n"
                       "||||Integer Literal (1)\n"
                       "||||Integer Literal (0)\n"
-                      "|||Scope\n"
-                      "||||Declaration\n"
-                      "|||||Variable Type (int)\n"
-                      "|||||Identifier (foo)\n");
+                      "|||StatementBlock\n"
+                      "||||Variable Declaration (int foo)\n");
 }
 
 BOOST_AUTO_TEST_CASE(reads_script_with_if_else_statement)
 {
-    parse("if (1 > 0) { int foo; }"
+    parse("if (1 > 0) { int foo; }\n"
           "else {int boo; }");
     BOOST_CHECK_EQUAL(result->toString(), 
-                      "Scope\n"
+                      "Program\n"
                       "|If Statement\n"
                       "||Condition Block\n"
                       "|||Greater Expression\n"
                       "||||Integer Literal (1)\n"
                       "||||Integer Literal (0)\n"
-                      "|||Scope\n"
-                      "||||Declaration\n"
-                      "|||||Variable Type (int)\n"
-                      "|||||Identifier (foo)\n"
-                      "||Scope\n"
-                      "|||Declaration\n"
-                      "||||Variable Type (int)\n"
-                      "||||Identifier (boo)\n");
+                      "|||StatementBlock\n"
+                      "||||Variable Declaration (int foo)\n"
+                      "||StatementBlock\n"
+                      "|||Variable Declaration (int boo)\n");
 }
 BOOST_AUTO_TEST_CASE(reads_script_with_if_elif_statement)
 {
-    parse("if (x > 5) { int foo; }"
-          "elif (x < 0 ) {int boo; }");
+    parse("if (x > 5) { int foo; }\n"
+          "elif (x < 0 ) {int boo; }\n");
     BOOST_CHECK_EQUAL(result->toString(), 
-                      "Scope\n"
+                      "Program\n"
                       "|If Statement\n"
                       "||Condition Block\n"
                       "|||Greater Expression\n"
-                      "||||Identifier (x)\n"
+                      "||||Variable reference (x)\n"
                       "||||Integer Literal (5)\n"
-                      "|||Scope\n"
-                      "||||Declaration\n"
-                      "|||||Variable Type (int)\n"
-                      "|||||Identifier (foo)\n"
+                      "|||StatementBlock\n"
+                      "||||Variable Declaration (int foo)\n"
                       "||Condition Block\n"
                       "|||Less Expression\n"
-                      "||||Identifier (x)\n"
+                      "||||Variable reference (x)\n"
                       "||||Integer Literal (0)\n"
-                      "|||Scope\n"
-                      "||||Declaration\n"
-                      "|||||Variable Type (int)\n"
-                      "|||||Identifier (boo)\n");
+                      "|||StatementBlock\n"
+                      "||||Variable Declaration (int boo)\n");
 }
 BOOST_AUTO_TEST_CASE(reads_script_with_if_elif_elif_statement)
 {
-    parse("if (x > 5) { int foo; }"
-          "elif (x < 0 ) {int boo; }"
-          "elif (x < 3 ) {int goo; }");
+    parse("if (x > 5) { int foo; }\n"
+          "elif (x < 0 ) {int boo; }\n"
+          "elif (x < 3 ) {int goo; }\n");
     BOOST_CHECK_EQUAL(result->toString(), 
-                      "Scope\n"
+                      "Program\n"
                       "|If Statement\n"
                       "||Condition Block\n"
                       "|||Greater Expression\n"
-                      "||||Identifier (x)\n"
+                      "||||Variable reference (x)\n"
                       "||||Integer Literal (5)\n"
-                      "|||Scope\n"
-                      "||||Declaration\n"
-                      "|||||Variable Type (int)\n"
-                      "|||||Identifier (foo)\n"
+                      "|||StatementBlock\n"
+                      "||||Variable Declaration (int foo)\n"
                       "||Condition Block\n"
                       "|||Less Expression\n"
-                      "||||Identifier (x)\n"
+                      "||||Variable reference (x)\n"
                       "||||Integer Literal (0)\n"
-                      "|||Scope\n"
-                      "||||Declaration\n"
-                      "|||||Variable Type (int)\n"
-                      "|||||Identifier (boo)\n"
+                      "|||StatementBlock\n"
+                      "||||Variable Declaration (int boo)\n"
                       "||Condition Block\n"
                       "|||Less Expression\n"
-                      "||||Identifier (x)\n"
+                      "||||Variable reference (x)\n"
                       "||||Integer Literal (3)\n"
-                      "|||Scope\n"
-                      "||||Declaration\n"
-                      "|||||Variable Type (int)\n"
-                      "|||||Identifier (goo)\n");
+                      "|||StatementBlock\n"
+                      "||||Variable Declaration (int goo)\n");
 }
 
 BOOST_AUTO_TEST_CASE(reads_script_with_foreach_statement)
 {
     parse("foreach int i in [0, 1, 2] { sum = sum + i; }");
     BOOST_CHECK_EQUAL(result->toString(), 
-                      "Scope\n"
+                      "Program\n"
                       "|Foreach Statement\n"
-                      "||Declaration\n"
-                      "|||Variable Type (int)\n"
-                      "|||Identifier (i)\n"
+                      "||Variable Declaration (int i)\n"
                       "||Array of length (3)\n"
                       "|||Integer Literal (0)\n"
                       "|||Integer Literal (1)\n"
                       "|||Integer Literal (2)\n"
-                      "||Scope\n"
-                      "|||Assignment\n"
-                      "||||Identifier (sum)\n"
+                      "||StatementBlock\n"
+                      "|||Assignment (sum)\n"
                       "||||Add Expression\n"
-                      "|||||Identifier (sum)\n"
-                      "|||||Identifier (i)\n");
+                      "|||||Variable reference (sum)\n"
+                      "|||||Variable reference (i)\n");
 }
 
 BOOST_AUTO_TEST_CASE(reads_script_with_return_statement)
 {
     parse("return i * 3;");
     BOOST_CHECK_EQUAL(result->toString(), 
-                      "Scope\n"
+                      "Program\n"
                       "|Return Statement\n"
                       "||Multiply Expression\n"
-                      "|||Identifier (i)\n"
+                      "|||Variable reference (i)\n"
                       "|||Integer Literal (3)\n");
 }
 
@@ -593,82 +592,72 @@ BOOST_AUTO_TEST_CASE(reads_script_with_add_statement)
 {
     parse("add cell_name to hexgrid_name at pos;");
     BOOST_CHECK_EQUAL(result->toString(),
-                      "Scope\n"
+                      "Program\n"
                       "|Add Statement\n"
-                      "||Identifier (cell_name)\n"
-                      "||Identifier (hexgrid_name)\n"
-                      "||Identifier (pos)\n");
+                      "||Variable reference (cell_name)\n"
+                      "||Variable reference (hexgrid_name)\n"
+                      "||Variable reference (pos)\n");
 }
 
 BOOST_AUTO_TEST_CASE(reads_script_with_remove_statement)
 {
     parse("remove pos from hexgrid_name;");
     BOOST_CHECK_EQUAL(result->toString(),
-                      "Scope\n"
+                      "Program\n"
                       "|Remove Statement\n"
-                      "||Identifier (pos)\n"
-                      "||Identifier (hexgrid_name)\n");
+                      "||Variable reference (pos)\n"
+                      "||Variable reference (hexgrid_name)\n");
 }
 
 BOOST_AUTO_TEST_CASE(reads_script_with_move_statement)
 {
     parse("move pos1 from hexgrid_name1 to hexgrid2 at pos2;");
     BOOST_CHECK_EQUAL(result->toString(),
-                      "Scope\n"
+                      "Program\n"
                       "|Move Statement\n"
-                      "||Identifier (pos1)\n"
-                      "||Identifier (hexgrid_name1)\n"
-                      "||Identifier (hexgrid2)\n"
-                      "||Identifier (pos2)\n");
+                      "||Variable reference (pos1)\n"
+                      "||Variable reference (hexgrid_name1)\n"
+                      "||Variable reference (hexgrid2)\n"
+                      "||Variable reference (pos2)\n");
 }
 
 BOOST_AUTO_TEST_CASE(reads_script_with_function_definition)
 {
     parse("func int sum(int a, int b) {return a + b;}");
     BOOST_CHECK_EQUAL(result->toString(),
-                      "Scope\n"
-                      "|Function Defenition\n"
-                      "||Declaration\n"
-                      "|||Variable Type (int)\n"
-                      "|||Identifier (sum)\n"
-                      "||Declaration\n"
-                      "|||Variable Type (int)\n"
-                      "|||Identifier (a)\n"
-                      "||Declaration\n"
-                      "|||Variable Type (int)\n"
-                      "|||Identifier (b)\n"
-                      "||Scope\n"
+                      "Program\n"
+                      "|Function Defenition (int sum)\n"
+                      "||Variable Declaration (int a)\n"
+                      "||Variable Declaration (int b)\n"
+                      "||StatementBlock\n"
                       "|||Return Statement\n"
                       "||||Add Expression\n"
-                      "|||||Identifier (a)\n"
-                      "|||||Identifier (b)\n");
+                      "|||||Variable reference (a)\n"
+                      "|||||Variable reference (b)\n");
 }
 
 
 BOOST_AUTO_TEST_CASE(reads_example1)
 {
-    parse("hexgrid example_hexgrid = <\"blue\"   at [0, 0, 0],  "
-          "                           \"red\"    at [0, 0, 1],  "
-          "                           \"blue\"   at [0, 0, -1], "
-          "                           \"red\"    at [0, 1, 0],  "
-          "                           \"yellow\" at [0, -1, 0], "
-          "                           \"red\"    at [1, 0, 0],  "
-          "                           \"blue\"   at [-1, 0, 0]>;"
-          "int blue_count = 0;                                  "
-          "foreach int[] pos in example_hexgrid beside [0, 0, 0]"
-          "{                                                    "
-          "    if (example_hexgrid on pos == \"blue\")          "
-          "    {                                                "
-          "        blue_count = blue_count + 1;                 "
-          "    }                                                "
-          "}                                                    "
+    parse("hexgrid example_hexgrid = <\"blue\"   at [0, 0, 0],  \n"
+          "                           \"red\"    at [0, 0, 1],  \n"
+          "                           \"blue\"   at [0, 0, -1], \n"
+          "                           \"red\"    at [0, 1, 0],  \n"
+          "                           \"yellow\" at [0, -1, 0], \n"
+          "                           \"red\"    at [1, 0, 0],  \n"
+          "                           \"blue\"   at [-1, 0, 0]>;\n"
+          "int blue_count = 0;                                  \n"
+          "foreach array pos in example_hexgrid beside [0, 0, 0]\n"
+          "{                                                    \n"
+          "    if (example_hexgrid on pos == \"blue\")          \n"
+          "    {                                                \n"
+          "        blue_count = blue_count + 1;                 \n"
+          "    }                                                \n"
+          "}                                                    \n"
         );
     BOOST_CHECK_EQUAL(result->toString(), 
-                      "Scope\n"
-                      "|Assignment\n"
-                      "||Declaration\n"
-                      "|||Variable Type (hexgrid)\n"
-                      "|||Identifier (example_hexgrid)\n"
+                      "Program\n"
+                      "|Initialization (hexgrid example_hexgrid)\n"
                       "||Hexgrid\n"
                       "|||Hexgrid Cell\n"
                       "||||Text Literal (blue)\n"
@@ -715,57 +704,48 @@ BOOST_AUTO_TEST_CASE(reads_example1)
                       "||||||Integer Literal (1)\n"
                       "|||||Integer Literal (0)\n"
                       "|||||Integer Literal (0)\n"
-                      "|Assignment\n"
-                      "||Declaration\n"
-                      "|||Variable Type (int)\n"
-                      "|||Identifier (blue_count)\n"
+                      "|Initialization (int blue_count)\n"
                       "||Integer Literal (0)\n"
                       "|Foreach Statement\n"
-                      "||Declaration\n"
-                      "|||Variable Type (1d array of type int)\n"
-                      "|||Identifier (pos)\n"
+                      "||Variable Declaration (array pos)\n"
                       "||Hexgrid Beside Expression\n"
-                      "|||Identifier (example_hexgrid)\n"
+                      "|||Variable reference (example_hexgrid)\n"
                       "|||Array of length (3)\n"
                       "||||Integer Literal (0)\n"
                       "||||Integer Literal (0)\n"
                       "||||Integer Literal (0)\n"
-                      "||Scope\n"
+                      "||StatementBlock\n"
                       "|||If Statement\n"
                       "||||Condition Block\n"
                       "|||||Equal Expression\n"
                       "||||||Hexgrid On Expression\n"
-                      "|||||||Identifier (example_hexgrid)\n"
-                      "|||||||Identifier (pos)\n"
+                      "|||||||Variable reference (example_hexgrid)\n"
+                      "|||||||Variable reference (pos)\n"
                       "||||||Text Literal (blue)\n"
-                      "|||||Scope\n"
-                      "||||||Assignment\n"
-                      "|||||||Identifier (blue_count)\n"
+                      "|||||StatementBlock\n"
+                      "||||||Assignment (blue_count)\n"
                       "|||||||Add Expression\n"
-                      "||||||||Identifier (blue_count)\n"
+                      "||||||||Variable reference (blue_count)\n"
                       "||||||||Integer Literal (1)\n");
 }
 
 BOOST_AUTO_TEST_CASE(reads_example2)
 {
-    parse(  "hexgrid example_hexgrid = < \"blue\"   at [0, 0, 0],"
-                                        "\"red\"    at [0, 0, 1],"
-                                        "\"blue\"   at [0, 0, -1],"
-                                        "\"red\"    at [0, 1, 0],"
-                                        "\"yellow\" at [0, -1, 0],"
-                                        "\"red\"    at [1, 0, 0],"
-                                        "\"blue\"   at [-1, 0, 0]>;"
-            "foreach int[] pos in example_hexgrid by \"blue\""
-            "{"
-            "    if (pos[0] > 0) {remove pos from example_hexgrid;}"
-            "}"
+    parse(  "hexgrid example_hexgrid = < \"blue\"   at [0, 0, 0],   \n"
+                                        "\"red\"    at [0, 0, 1],   \n"
+                                        "\"blue\"   at [0, 0, -1],  \n"
+                                        "\"red\"    at [0, 1, 0],   \n"
+                                        "\"yellow\" at [0, -1, 0],  \n"
+                                        "\"red\"    at [1, 0, 0],   \n"
+                                        "\"blue\"   at [-1, 0, 0]>; \n"
+            "foreach array pos in example_hexgrid by \"blue\"       \n"
+            "{                                                      \n"
+            "    if (pos[0] > 0) {remove pos from example_hexgrid;} \n"
+            "}                                                      \n"
         );
     BOOST_CHECK_EQUAL(result->toString(),
-                        "Scope\n"
-                        "|Assignment\n"
-                        "||Declaration\n"
-                        "|||Variable Type (hexgrid)\n"
-                        "|||Identifier (example_hexgrid)\n"
+                        "Program\n"
+                        "|Initialization (hexgrid example_hexgrid)\n"
                         "||Hexgrid\n"
                         "|||Hexgrid Cell\n"
                         "||||Text Literal (blue)\n"
@@ -813,26 +793,60 @@ BOOST_AUTO_TEST_CASE(reads_example2)
                         "|||||Integer Literal (0)\n"
                         "|||||Integer Literal (0)\n"
                         "|Foreach Statement\n"
-                        "||Declaration\n"
-                        "|||Variable Type (1d array of type int)\n"
-                        "|||Identifier (pos)\n"
+                        "||Variable Declaration (array pos)\n"
                         "||Hexgrid By Expression\n"
-                        "|||Identifier (example_hexgrid)\n"
+                        "|||Variable reference (example_hexgrid)\n"
                         "|||Text Literal (blue)\n"
-                        "||Scope\n"
+                        "||StatementBlock\n"
                         "|||If Statement\n"
                         "||||Condition Block\n"
                         "|||||Greater Expression\n"
                         "||||||Indexing Expression\n"
-                        "|||||||Identifier (pos)\n"
+                        "|||||||Variable reference (pos)\n"
                         "|||||||Integer Literal (0)\n"
                         "||||||Integer Literal (0)\n"
-                        "|||||Scope\n"
+                        "|||||StatementBlock\n"
                         "||||||Remove Statement\n"
-                        "|||||||Identifier (pos)\n"
-                        "|||||||Identifier (example_hexgrid)\n"
+                        "|||||||Variable reference (pos)\n"
+                        "|||||||Variable reference (example_hexgrid)\n"
 );
 }
+bool throws_on_unfinished_function_def_correct_msg(const hexgrid_errors::UnexpectedInput& ex){
+    BOOST_CHECK_EQUAL(ex.what(), std::string("(1, 5) Recieved unexpected input: End of file, expected a return value declaration\n"));
+    return true;
+}
+BOOST_AUTO_TEST_CASE(throws_on_unfinished_function_def)
+{
+    BOOST_CHECK_EXCEPTION(
+        parse("func"),
+        hexgrid_errors::UnexpectedInput,
+        throws_on_unfinished_function_def_correct_msg);
+}
+
+bool throws_on_unfinished_init_correct_msg(const hexgrid_errors::UnexpectedInput& ex){
+    BOOST_CHECK_EQUAL(ex.what(), std::string("(1, 8) Recieved unexpected input: End of file, expected a variable or a value\n"));
+    return true;
+}
+BOOST_AUTO_TEST_CASE(throws_on_unfinished_init)
+{
+    BOOST_CHECK_EXCEPTION(
+        parse("int f ="),
+        hexgrid_errors::UnexpectedInput,
+        throws_on_unfinished_init_correct_msg);
+}
+bool throws_on_function_redefinition_correct_msg(const hexgrid_errors::FunctionRedefinition& ex){
+    BOOST_CHECK_EQUAL(ex.what(), std::string("From (2, 1) to (2, 17) Redefinition of a function: foo\n"));
+    return true;
+}
+BOOST_AUTO_TEST_CASE(throws_on_function_redefinition)
+{
+    BOOST_CHECK_EXCEPTION(
+        parse("func int foo(){}\nfunc int foo(){}"),
+        hexgrid_errors::FunctionRedefinition,
+        throws_on_function_redefinition_correct_msg);
+}
+
+
 
 
 BOOST_AUTO_TEST_SUITE_END()

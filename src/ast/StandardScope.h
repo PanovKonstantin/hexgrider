@@ -4,6 +4,6 @@
 
 namespace ast{
     
-ast::Scope standard_scope = ast::Scope({});
+ast::StatementBlock standard_scope = ast::StatementBlock({});
 }
 #endif // TKOM_STANDARD_SCOPE_H

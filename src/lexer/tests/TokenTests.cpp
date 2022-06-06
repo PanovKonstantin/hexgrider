@@ -1,4 +1,5 @@
 #include "../Token.h"
+#include "HexgridErrors.h"
 
 #include <sstream>
 
@@ -33,7 +34,7 @@ BOOST_AUTO_TEST_CASE(int_token_has_correct_type)
 
 BOOST_AUTO_TEST_CASE(int_token_doesnt_construct_with_incorrect_type)
 {
-  BOOST_CHECK_THROW(Token t(Token::Type::Decimal, 100), std::invalid_argument );
+  BOOST_CHECK_THROW(Token t(Token::Type::Decimal, 100), hexgrid_errors::WrongTokenConstructor );
 }
 
 BOOST_AUTO_TEST_CASE(int_token_has_correct_value)
@@ -58,7 +59,7 @@ BOOST_AUTO_TEST_CASE(dec_token_has_correct_type)
 
 BOOST_AUTO_TEST_CASE(dec_token_doesnt_construct_with_incorrect_type)
 {
-  BOOST_CHECK_THROW(Token t(Token::Type::Integer, 100.001), std::invalid_argument );
+  BOOST_CHECK_THROW(Token t(Token::Type::Integer, 100.001), hexgrid_errors::WrongTokenConstructor);
 }
 
 BOOST_AUTO_TEST_CASE(dec_token_has_correct_value)
@@ -83,7 +84,7 @@ BOOST_AUTO_TEST_CASE(text_token_has_correct_type)
 
 BOOST_AUTO_TEST_CASE(text_token_doesnt_construct_with_incorrect_type)
 {
-  BOOST_CHECK_THROW(Token t(Token::Type::Decimal, "Hello 2 u!"), std::invalid_argument );
+  BOOST_CHECK_THROW(Token t(Token::Type::Decimal, "Hello 2 u!"), hexgrid_errors::WrongTokenConstructor );
 }
 
 
@@ -103,49 +104,36 @@ BOOST_AUTO_TEST_CASE(text_token_prints_correctly)
 
 BOOST_AUTO_TEST_CASE(operator_token_has_correct_type)
 {
-  Token t(Token::Type::Operator, "*");
-  BOOST_CHECK_EQUAL(t.getType(), Token::Type::Operator);
+  Token t(Token::Type::MultiplyOperator);
+  BOOST_CHECK_EQUAL(t.getType(), Token::Type::MultiplyOperator);
 }
 BOOST_AUTO_TEST_CASE(operator_token_doesnt_construct_with_incorrect_type)
 {
-  BOOST_CHECK_THROW(Token t(Token::Type::Decimal, "*"), std::invalid_argument );
+  BOOST_CHECK_THROW(Token t(Token::Type::Decimal, "*"), hexgrid_errors::WrongTokenConstructor );
 }
-
-BOOST_AUTO_TEST_CASE(operator_token_has_correct_value)
-{
-  Token t(Token::Type::Operator, "*");
-  BOOST_CHECK_EQUAL(t.getText(), "*");
-}
-
 
 BOOST_AUTO_TEST_CASE(operator_token_prints_correctly)
 {
-  Token t(Token::Type::Operator, "*");
-  BOOST_CHECK_EQUAL(t.toString(), "Operator (*)");
+  Token t(Token::Type::MultiplyOperator);
+  BOOST_CHECK_EQUAL(t.toString(), "\"multiply\" operator");
 }
 
 // Keyword token
 
 BOOST_AUTO_TEST_CASE(keyword_token_has_correct_type)
 {
-  Token t(Token::Type::Keyword, "*");
-  BOOST_CHECK_EQUAL(t.getType(), Token::Type::Keyword);
+  Token t(Token::Type::FuncKeyword);
+  BOOST_CHECK_EQUAL(t.getType(), Token::Type::FuncKeyword);
 }
 BOOST_AUTO_TEST_CASE(keyword_token_doesnt_construct_with_incorrect_type)
 {
-  BOOST_CHECK_THROW(Token t(Token::Type::Decimal, "*"), std::invalid_argument );
-}
-
-BOOST_AUTO_TEST_CASE(keyword_token_has_correct_value)
-{
-  Token t(Token::Type::Keyword, "foreach");
-  BOOST_CHECK_EQUAL(t.getText(), "foreach");
+  BOOST_CHECK_THROW(Token t(Token::Type::Decimal, "*"), hexgrid_errors::WrongTokenConstructor );
 }
 
 BOOST_AUTO_TEST_CASE(keyword_token_prints_correctly)
 {
-  Token t(Token::Type::Keyword, "foreach");
-  BOOST_CHECK_EQUAL(t.toString(), "Keyword (foreach)");
+  Token t(Token::Type::ForeachKeyword);
+  BOOST_CHECK_EQUAL(t.toString(), "\"foreach\" keyword");
 }
 
 // Identifier token
@@ -157,41 +145,35 @@ BOOST_AUTO_TEST_CASE(identifier_token_has_correct_type)
 }
 BOOST_AUTO_TEST_CASE(identifier_token_doesnt_construct_with_incorrect_type)
 {
-  BOOST_CHECK_THROW(Token t(Token::Type::Decimal, "*"), std::invalid_argument );
+  BOOST_CHECK_THROW(Token t(Token::Type::Decimal, "*"), hexgrid_errors::WrongTokenConstructor);
 }
 
 BOOST_AUTO_TEST_CASE(identifier_token_has_correct_value)
 {
-  Token t(Token::Type::Keyword, "foreach");
-  BOOST_CHECK_EQUAL(t.getText(), "foreach");
+  Token t(Token::Type::Identifier, "foo");
+  BOOST_CHECK_EQUAL(t.getText(), "foo");
 }
 
 BOOST_AUTO_TEST_CASE(identifier_token_prints_correctly)
 {
-  Token t(Token::Type::Keyword, "foreach");
-  BOOST_CHECK_EQUAL(t.toString(), "Keyword (foreach)");
+  Token t(Token::Type::Identifier, "foo");
+  BOOST_CHECK_EQUAL(t.toString(), "Identifier (foo)");
 }
 // Type token
 
 BOOST_AUTO_TEST_CASE(type_token_has_correct_type)
 {
-  Token t(Token::Type::Type, "int");
-  BOOST_CHECK_EQUAL(t.getType(), Token::Type::Type);
+  Token t(Token::Type::IntType);
+  BOOST_CHECK_EQUAL(t.getType(), Token::Type::IntType);
 }
 BOOST_AUTO_TEST_CASE(type_token_doesnt_construct_with_incorrect_type)
 {
-  BOOST_CHECK_THROW(Token t(Token::Type::Decimal, "int"), std::invalid_argument );
-}
-
-BOOST_AUTO_TEST_CASE(type_token_has_correct_value)
-{
-  Token t(Token::Type::Type, "int");
-  BOOST_CHECK_EQUAL(t.getText(), "int");
+  BOOST_CHECK_THROW(Token t(Token::Type::Decimal, "int"), hexgrid_errors::WrongTokenConstructor );
 }
 
 BOOST_AUTO_TEST_CASE(type_token_prints_correctly)
 {
-  Token t(Token::Type::Type, "int");
-  BOOST_CHECK_EQUAL(t.toString(), "Type (int)");
+  Token t(Token::Type::IntType);
+  BOOST_CHECK_EQUAL(t.toString(), "\"int\" type");
 }
 BOOST_AUTO_TEST_SUITE_END()

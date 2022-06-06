@@ -1,10 +1,14 @@
 #ifndef TKOM_LEXER_H
 #define TKOM_LEXER_H
 
+#include <cctype>
 #include <istream>
 #include <set>
 #include <optional>
+#include <math.h>
+#include <utility>
 #include "Token.h"
+#include <HexgridErrors.h>
 
 namespace lexer
 {
@@ -21,21 +25,21 @@ private:
     std::optional<token::Token> tryNumber();
     std::optional<token::Token> tryInQuotes();
     std::optional<token::Token> tryAlphaNumeric();
-    std::optional<token::Token>  trySigns();
+    std::optional<token::Token> trySigns();
 
+    token::Token::Type getAlphaNumericTokenType(std::string);
     int parseInteger();
     double parseFraction();
-
     void ignoreWhitespaces();
-    void throwUnknownToken();
-    void throwIfStreamError();
-    void throwOverflowInteger();
-    void throwOverflowFraction();
-    void throwUnknownOperator(std::string op);
+
+    char get();
+    std::pair<int, int> getLocation();
 
     bool isIntegerOverflow(int integer, int increase);
     std::istream& in;
     token::Token curr_token;
+    int line;
+    int column;
 };
 } // namespace lexer
 
