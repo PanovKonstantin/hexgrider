@@ -63,36 +63,12 @@ def add_special_methods(env):
 
 def create_env(opts):
     env = Environment(variables = opts)
-    """ , CXX='clang++' """
     Export('env')
-    env.Append(CCFLAGS=['-Wall', '-Wextra', '-Wpedantic', '-Werror'])
-    # 
-    env.Append(CCFLAGS=['--std=c++17'])
-
+    fill_env_flags(env)
     if env['debug']:
         env.Append(CCFLAGS=['-O0', '-g'])
     else:
         env.Append(CCFLAGS=['-O2'])
-
-# """     # fill_env_flags(env)
-    env.Append(CPPPATH=['#/src'])
-#     env.Append(CPPPATH=['/usr/local/include']) # TODO configurable
-#     env.Append(LIBPATH=['/usr/local/lib']) # TODO configurable
-#     env.Append(CCFLAGS=['-Wall', '-Wpedantic'])
-#     env.Append(CXXFLAGS=['-I/usr/lib/llvm-10/include'])
-#     env.Append(CXXFLAGS=['-std=c++17'])
-#     # env.Append(CCFLAGS=['-fno-exceptions'])
-#     env.Append(CXXFLAGS=['-DLLVM_DISABLE_ABI_BREAKING_CHECKS_ENFORCING'])
-#     env.Append(CCFLAGS=['-stdlib=libstdc++'])
-#     env.Append(LINKFLAGS=['-L/usr/lib/llvm-10/lib '])
-#     env.Append(LINKFLAGS=['-lLLVM-10'])
-#     if env['debug']:
-#         env.Append(CCFLAGS=['-O0', '-g'])
-#     else:
-#         env.Append(CCFLAGS=['-O2']) """
-
-
-
     add_special_methods(env)
     return env
 

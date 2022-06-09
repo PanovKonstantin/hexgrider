@@ -52,7 +52,7 @@ class FunctionCall;
 class StatementBlock;
 class FunctionDefinition;
 class VariableDeclarationStatement;
-// class IntVarDeclaration;
+class Print;
 
 class AstVisitor
 {

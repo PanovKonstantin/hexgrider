@@ -9,10 +9,10 @@
 #include <set>
 #include <iostream>
 #include <utility>
+#include <string>
 #include <HexgridErrors.h>
 #include <parser/Ast.h>
 #include <parser/Parser.h>
-// #include "Parser.h"
 namespace intprt
 {
 
@@ -26,6 +26,7 @@ public:
     Var get(int) const;
     void add(Var);
     int size() const;
+    std::string toString() const;
 private:
     std::vector<Var> values;
 };
@@ -38,6 +39,7 @@ public:
     Var by(Var);
     void add(int, int, int, Var);
     Var remove(int, int, int);
+    std::string toString()const;
 private:
     std::map<std::tuple<int, int, int>, Var> cells;
     std::vector<std::tuple<int, int, int>> directions = {
@@ -90,9 +92,10 @@ private:
     std::string lastDeclared;
     std::vector<Var> functionArgs;
     bool returning;
+    bool isOutput;
 
 public:
-    Interpreter();
+    Interpreter(bool=true);
     void declare(int, std::string);
     void assign(std::string);
     void assign(std::string, Var);
@@ -155,23 +158,6 @@ public:
 template<class... Ts> struct overload : Ts... { using Ts::operator()...; };
 template<class... Ts> overload(Ts...) -> overload<Ts...>;
 
-/* class AddExpressionVisit{
-    void operator()(int& l, int& r)                 { l += r; }
-    void operator()(int& l, double& r)              { l += r; }
-    void operator()(int&, std::string&)             {throw hexgrid_errors::OperationsNotAvailabledForTypes("addition", "int", "string");}
-    void operator()(double& l, double& r)           { l += r; }
-    void operator()(double& l, int& r)              { l += r; }
-    void operator()(double&, std::string&)          {throw hexgrid_errors::OperationsNotAvailabledForTypes("addition", "float", "string");}
-    void operator()(std::string& l, std::string& r) { l += r; }
-    void operator()(std::string&, int&)             {throw hexgrid_errors::OperationsNotAvailabledForTypes("addition", "string", "int");}
-    void operator()(std::string&, double&)          {throw hexgrid_errors::OperationsNotAvailabledForTypes("addition", "string", "double");}
-}; */
-
-/* class PrintVisit{
-    void operator()(int& v) {std::cout << v}
-    void operator()(double& v) {std::cout << v}
-    void operator()(std::string& v) {std::cout << v}
-} */
 
 } // namespace intprt
 

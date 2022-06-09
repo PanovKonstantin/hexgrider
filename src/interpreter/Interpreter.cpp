@@ -16,6 +16,27 @@ void Array::add(Var v){
 int Array::size() const {
     return values.size();
 }
+std::string Array::toString()const{
+    string returnString="[ ";
+    for(auto& elem : values){
+        switch(elem.index()){
+            case 1: 
+                returnString+=to_string(std::get<int>(elem));
+                break;
+            case 2: 
+                returnString+=to_string(std::get<double>(elem));
+                break;
+            case 3: returnString+=std::get<string>(elem);
+                break;
+            case 4: returnString+=std::get<Array>(elem).toString();
+                break;
+            case 5: returnString+=std::get<Hexgrid>(elem).toString();
+                break;
+        }
+        returnString += ", ";
+    }
+    return returnString + "]";
+}
 
 Hexgrid::Hexgrid(){
 }
@@ -78,6 +99,31 @@ Var Hexgrid::remove(int q, int r, int s){
     return value;
 }
 
+
+std::string Hexgrid::toString()const{
+    string returnString="< ";
+    for(auto const& [pos, elem] : cells){
+        switch(elem.index()){
+            case 1: returnString+=to_string(get<int>(elem));
+                break;
+            case 2: returnString+=to_string(get<double>(elem));
+                break;
+            case 3: returnString+=get<string>(elem);
+                break;
+            case 4: returnString+=get<Array>(elem).toString();
+                break;
+            case 5: returnString+=get<Hexgrid>(elem).toString();
+                break;
+        }
+        returnString += " at [";
+        returnString += to_string(get<0>(pos)) + ", ";
+        returnString += to_string(get<1>(pos)) + ", ";
+        returnString += to_string(get<2>(pos)) + "], ";
+    }
+    return returnString + ">";
+}
+
+
 void Scope::declare(int type, string name){
     uninitialized.insert(name);
     variable_types[name] = type;
@@ -85,6 +131,7 @@ void Scope::declare(int type, string name){
 
 void Scope::assign(string name, Var value){
     if(!containsVar(name)) throw runtime_error("No variable " + name);
+    if(int(value.index()) != variable_types[name]) throw runtime_error("type doesnt match");
     variables[name] = value;
 }
 
@@ -140,7 +187,8 @@ size_t FunctionCallContext::getIndex(string name){
     return scopes[scope].getIndex(name);
 }
 
-Interpreter::Interpreter(){
+Interpreter::Interpreter(bool isOutput_):isOutput(isOutput_)
+{
     contextStack.push_back(FunctionCallContext());
     returning=false;
 }
@@ -214,6 +262,16 @@ void Interpreter::visit(Program& p){
     funcs.swap(p.funcs);
     for(auto const& stmnt: p.stmnts)
         stmnt->accept(*this);
+    if(isOutput){
+        std::visit(overload{
+            [](int& res)        {cout << res << '\n';},
+            [](double& res)     {cout << res << '\n';},
+            [](string& res)     {cout << res << '\n';},
+            [](Array& res)      {cout << res.toString() << '\n';},
+            [](Hexgrid& res)    {cout << res.toString() << '\n';},
+            [](auto&)    {},
+        }, result);
+    }
 }
 
 void Interpreter::visit(VariableDeclarationStatement& vds){
@@ -686,5 +744,3 @@ void Interpreter::visit(MoveStatement& moveStatement){
     assign(moveStatement.grid_target->getName(), hexgrid_target);
     
 }
-
-

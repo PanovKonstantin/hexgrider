@@ -13,7 +13,7 @@ using namespace intprt;
 
 struct InterpreterTestsFixture
 {
-    Interpreter interpreter = Interpreter();
+    Interpreter interpreter = Interpreter(false);
     void interpret_text(const std::string& str)
     {
         std::istringstream in(str);
