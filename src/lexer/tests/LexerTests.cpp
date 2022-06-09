@@ -78,6 +78,17 @@ BOOST_AUTO_TEST_CASE(lexer_reads_dec_token)
   BOOST_CHECK_EQUAL(t.getDecimal(), 123.321);
 }
 
+BOOST_AUTO_TEST_CASE(lexer_reads_dec_token_with_only_dot)
+{
+  std::istringstream in("123.");
+  Lexer l(in);
+
+  const auto t = l.getToken();
+
+  BOOST_CHECK_EQUAL(t.getType(), Token::Type::Decimal);
+  BOOST_CHECK_EQUAL(t.getDecimal(), 123);
+}
+
 BOOST_AUTO_TEST_CASE(lexer_reads_dec_token_with_leading_zeros_in_fractal_part)
 {
   std::istringstream in("0.0001");

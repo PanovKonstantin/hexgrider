@@ -4,7 +4,7 @@ using namespace std;
 
 AddStatement::AddStatement(
                 unique_ptr<Node> being_added_,
-                unique_ptr<Node> added_to_,
+                unique_ptr<VariableReference> added_to_,
                 unique_ptr<Node> added_at_)
 {
     being_added = move(being_added_);
@@ -36,12 +36,12 @@ string ArithmeticalNegation::toString(int depth) const
     return string(depth, '|') + "Arithmetical Negation Expression\n" + value->toString(depth + 1);
 }
 
-Array::Array(vector<unique_ptr<Node>> elements_)
+ArrayLiteral::ArrayLiteral(vector<unique_ptr<Node>> elements_)
 {
     elements = move(elements_);
 }
 
-string Array::toString(int depth) const
+string ArrayLiteral::toString(int depth) const
 {
     string ret_str = string(depth, '|') + "Array of length (" + 
                           to_string(elements.size()) + ")\n";
@@ -52,17 +52,12 @@ string Array::toString(int depth) const
     return ret_str;
 }
 
-AssignmentStatement::AssignmentStatement(
-    string iden_, 
-    unique_ptr<Node> value_)
-{
-    iden = iden_;
-    value = move(value_);
-}
+AssignmentStatement::AssignmentStatement(string name_, unique_ptr<Node> value_)
+: name(name_), value(move(value_)) {}
 
 string AssignmentStatement::toString(int depth) const
 {
-    return  string(depth, '|') + "Assignment (" + iden + ")\n" +
+    return  string(depth, '|') + "Assignment (" + name + ")\n" +
             value->toString(depth+1);
 }
 
@@ -95,20 +90,22 @@ double DecimalLiteral::getValue() const {
     return value;
 }
 
+/* IntVarDeclaration::IntVarDeclaration(string name_):name(name_){}
+string IntVarDeclaration::toString(int depth) const {
+    return string(depth, '|') + "Variable Declaration (int " + name + ")\n";
+} */
+
 VariableDeclarationStatement::VariableDeclarationStatement(Variable::Type type_, 
-                                            string iden_,
-                                            int dimension_)
-:type(type_), identifier(iden_), dimension(dimension_){}
+                                            string iden_)
+:type(type_), identifier(iden_){}
 
 string VariableDeclarationStatement::toString(int depth) const
 {
     return  string(depth, '|') + "Variable Declaration (" + 
             Variable::typeToString(type) + " " + identifier + ")\n";
 }
-
-Variable::Variable(Variable::Type t):type(t){};
-Variable::Variable(Variable::Type t, int v):type(t), value(v){};
-// Variable::Variable(Variable::Type t):type(t){};
+Variable::Variable(){}
+Variable::Variable(Variable::Type t):type(t){}
 
 string Variable::typeToString(Variable::Type t)
 {
@@ -125,8 +122,8 @@ string Variable::typeToString(Variable::Type t)
 
 
 InitializationStatement::InitializationStatement(
-    Variable::Type type_, string name_, std::unique_ptr<Node> value_, int dim)
-:type(type_), name(name_), value(move(value_)), dimension(dim){}
+    Variable::Type type_, string name_, std::unique_ptr<Node> value_)
+:type(type_), name(name_), value(move(value_)){}
 
 
 string InitializationStatement::getType() const
@@ -139,25 +136,6 @@ string InitializationStatement::toString(int depth) const
     return  string(depth, '|') + "Initialization (" +
             Variable::typeToString(type) + " " + name + ")\n" + 
             value->toString(depth+1);
-}
-
-
-string InitializationStatement::toString(Variable::Type type_) const
-{
-    switch (type_)
-    {
-    case Variable::Type::Int:
-        return "int";
-    case Variable::Type::Float:
-        return "float";
-    case Variable::Type::String:
-        return "string";
-    case Variable::Type::Hexgrid:
-        return "hexgrid";
-    default:
-        throw runtime_error("Unkown comparison operator");
-        return "";
-    }
 }
 
 string MultiplyExpression::toString(int depth) const
@@ -234,7 +212,7 @@ string ForeachStatement::toString(int depth) const
 
 FunctionCall::FunctionCall(string funcName_, 
                            vector<unique_ptr<Node>> args_)
-                           :funcName(funcName_), args(move(args_)){};
+                           :funcName(funcName_), args(move(args_)){}
 
 string FunctionCall::toString(int depth) const
 {
@@ -266,12 +244,34 @@ string FunctionDefinition::toString(int depth) const
     return ret_str;
 }
 
-Hexgrid::Hexgrid(vector<unique_ptr<Node>> cells_)
+string FunctionDefinition::getName()const {
+    return name;
+}
+size_t FunctionDefinition::getParamCount() const {
+    return params.size();
+}
+void FunctionDefinition::declareParam(int i, AstVisitor& v){
+    params[i]->accept(v);
+}
+
+void FunctionDefinition::runStatementBlock(AstVisitor&v){
+    statementBlock->accept(v);
+}
+
+pair<int, int> FunctionDefinition::getStart()const {
+    return startLoc;
+}
+
+pair<int, int> FunctionDefinition::getEnd() const {
+    return endLoc;
+}
+
+HexgridLiteral::HexgridLiteral(vector<unique_ptr<Node>> cells_)
 {
     cells = move(cells_);
 }
 
-string Hexgrid::toString(int depth) const
+string HexgridLiteral::toString(int depth) const
 {
     string ret_str = string(depth, '|') + "Hexgrid\n";
     for(auto const& cell: cells)
@@ -316,7 +316,7 @@ VariableReference::VariableReference(string name_)
     : name(name_)
 {
 }
-string VariableReference::getValue() {
+string VariableReference::getName() const {
     return name;
 }
 string VariableReference::toString(int depth) const
@@ -324,24 +324,24 @@ string VariableReference::toString(int depth) const
     return string(depth, '|') + "Variable reference (" + name + ")\n";
 }
 
-IfStatement::IfStatement(unique_ptr<Node> if_block_,
-                         vector<unique_ptr<Node>> elif_blocks_,
-                         unique_ptr<Node> else_block_)
+IfStatement::IfStatement(unique_ptr<Node> ifBlock_,
+                         vector<unique_ptr<Node>> elifBlocks_,
+                         unique_ptr<Node> elseBlock_)
 {
-    if_block = move(if_block_);
-    else_block = move(else_block_);
-    elif_blocks = move(elif_blocks_);
+    ifBlock = move(ifBlock_);
+    elseBlock = move(elseBlock_);
+    elifBlocks = move(elifBlocks_);
 }
 
 string IfStatement::toString(int depth) const
 {
     string ret_str = string(depth, '|') + "If Statement\n" + 
-                          if_block->toString(depth + 1);
-    if (!elif_blocks.empty())
-        for(auto const& elif_block: elif_blocks)
-            ret_str += elif_block->toString(depth + 1);
-    if (else_block)
-        ret_str += else_block->toString(depth + 1);
+                          ifBlock->toString(depth + 1);
+    if (!elifBlocks.empty())
+        for(auto const& elifBlock: elifBlocks)
+            ret_str += elifBlock->toString(depth + 1);
+    if (elseBlock)
+        ret_str += elseBlock->toString(depth + 1);
     return ret_str;
 }
 
@@ -359,10 +359,10 @@ string IndexingExpression::toString(int depth) const
            indexBy->toString(depth + 1);
 }
 
-IntegerLiteral::IntegerLiteral(int value_)
-    : value(value_)
-{
-    
+IntegerLiteral::IntegerLiteral(int value_) : value(value_){}
+
+int IntegerLiteral::getValue()const {
+    return value;
 }
 
 string IntegerLiteral::toString(int depth) const
@@ -370,14 +370,6 @@ string IntegerLiteral::toString(int depth) const
     return string(depth, '|') + "Integer Literal (" + to_string(value) + ")\n";
 }
 
-Literal::Literal()
-{
-}
-
-string Literal::toString(int depth) const
-{
-    return string(depth, '|') + "Blank literal\n";
-}
 
 LogicalNegation::LogicalNegation(unique_ptr<Node>  value_)
 {
@@ -390,8 +382,8 @@ string LogicalNegation::toString(int depth) const
 }
 
 MoveStatement::MoveStatement(unique_ptr<Node> position_source_,
-                             unique_ptr<Node> grid_source_,
-                             unique_ptr<Node> grid_target_,
+                             unique_ptr<VariableReference> grid_source_,
+                             unique_ptr<VariableReference> grid_target_,
                              unique_ptr<Node> position_target_)
 {
     position_source = move(position_source_);
@@ -415,7 +407,7 @@ Node::~Node()
 
 BinaryExpression::BinaryExpression(unique_ptr<Node> lvalue_,
                                    unique_ptr<Node> rvalue_)
-: lvalue(move(lvalue_)), rvalue(move(rvalue_)){};
+: lvalue(move(lvalue_)), rvalue(move(rvalue_)){}
 
 string BinaryExpression::toString(int depth) const {
     return lvalue->toString(depth + 1) +
@@ -429,7 +421,7 @@ string OrExpression::toString(int depth) const
 }
 
 RemoveStatement::RemoveStatement(unique_ptr<Node> position_,
-                                 unique_ptr<Node> grid_)
+                                 unique_ptr<VariableReference> grid_)
 {
     position = move(position_);
     grid = move(grid_);
@@ -470,7 +462,7 @@ string StatementBlock::toString(int depth) const
 
 Program::Program(){
     stmnts = vector<unique_ptr<Node>>();
-};
+}
 
 string Program::toString(int depth) const
 {
@@ -487,9 +479,8 @@ void Program::insertStatement(unique_ptr<Node> stmnt)
 
 void Program::insertFunction(unique_ptr<FunctionDefinition> func)
 {
-    if (funcs.count(func->name)) throw hexgrid_errors::FunctionRedefinition(func->startLoc, func->endLoc, func->name);
-    funcs[func->name] = move(func);
-    // funcs.push_back(std::move(func));
+    if (funcs.count(func->getName())) throw hexgrid_errors::FunctionRedefinition(func->getStart(), func->getEnd(), func->getName());
+    funcs[func->getName()] = move(func);
 }
 
 string AddExpression::toString(int depth) const
@@ -505,121 +496,10 @@ string SubtructExpression::toString(int depth) const
 }
 
 TextLiteral::TextLiteral(string value_): value(value_){}
+string TextLiteral::getValue()const{
+    return value;
+}
 string TextLiteral::toString(int depth) const
 {
     return string(depth, '|') + "Text Literal (" + value + ")\n";
 }
-/* 
-Variable::Variable(Type t, int d): type(t), dimension(d){}
-Variable::Variable():type(Type::Undefiend), dimension(0){}
-int Variable::getInteger(vector<int> index_){
-    if (type != Type::Int){
-        throw runtime_error("Got wrong type");
-    }
-    if (index_.empty() && dimension==0){
-        return get<int>(value);
-    }
-    auto elem = get<vector<Variable>>(value);
-    auto sub_elem = elem[index_.back()];
-    index_.pop_back();
-    return sub_elem.getInteger(index_);
-}
-
-void Variable::setValue(int value_, vector<int> index_){
-    if (type != Type::Int){
-        throw runtime_error("Got wrong type");
-    }
-    if (index_.empty() && !dimension){
-        value = value_;
-        return;
-    }
-    if (index_.size() == dimension){
-        auto elem = get<vector<Variable>>(value);
-        auto sub_elem = elem[index_.back()];
-        index_.pop_back();
-        sub_elem.setValue(value_, index_);
-    }
-}
-
-Variable* StatementBlock::calculate(StatementBlock& sc) {
-    upper_statementBlock = &sc;
-    for(auto const& stmnt : stmnts){
-        stmnt->calculate(*this);
-    }
-    return nullptr;
-}
-
-void StatementBlock::declareVariable(string name, ast::Variable var){
-    variables[name] = var;
-}
-
-void StatementBlock::assignVariable(string name, ast::Variable var){
-    Variable variabl;
-    if (variables.count(name)){
-        variabl = variables[name];
-        
-    }
-    if (!variables.count(name))
-    {
-        if (!upper_statementBlock){
-            throw runtime_error("Variable " + name + " assigned before declared\n");
-        }
-        upper_statementBlock->assignVariable(name, variabl);
-    }
-    // if 
-}
-
-Variable* VariableDeclarationStatement::calculate(StatementBlock& statementBlock) {
-    Variable::Type t; 
-    switch (type){
-        case Type::Int: t = Variable::Type::Int;
-                        break;
-        default:
-            throw runtime_error("Unkowwn type");
-    }
-    Variable v = Variable(t);
-    statementBlock.declareVariable(identifier, v); 
-    return nullptr;
-}
-
-string VariableDeclarationStatement::getIdentifier(){
-    return identifier;
-} */
-
-/* Variable* AssignmentStatement::calculate(StatementBlock& statementBlock) {
-    string name;
-    if(decl){
-        decl->calculate(statementBlock);
-        name = decl->getIdentifier();
-    } else {
-        name = iden->getValue();
-    }
-    Variable* v = value->calculate(statementBlock);
-    return nullptr;
-}
- */
-
-/* 
-Variable* AddStatement::calculate(StatementBlock& statementBlock) {return nullptr;}
-Variable* ConditionBlock::calculate(StatementBlock& statementBlock) {return nullptr;}
-Variable* ForeachStatement::calculate(StatementBlock& statementBlock) {return nullptr;}
-Variable* FunctionCall::calculate(StatementBlock& statementBlock) {return nullptr;}
-Variable* FunctionDefinition::calculate(StatementBlock& statementBlock) {return nullptr;}
-Variable* IfStatement::calculate(StatementBlock& statementBlock) {return nullptr;}
-Variable* MoveStatement::calculate(StatementBlock& statementBlock) {return nullptr;}
-Variable* RemoveStatement::calculate(StatementBlock& statementBlock) {return nullptr;}
-Variable* ReturnStatement::calculate(StatementBlock& statementBlock) {return nullptr;}
-Variable* OrExpression::calculate(StatementBlock& statementBlock) {return nullptr;}
-Variable* AndExpression::calculate(StatementBlock& statementBlock) {return nullptr;}
-Variable* LogicalNegation::calculate(StatementBlock& statementBlock) {return nullptr;}
-Variable* ArithmeticalNegation::calculate(StatementBlock& statementBlock) {return nullptr;}
-Variable* IndexingExpression::calculate(StatementBlock& statementBlock) {return nullptr;}
-Variable* Literal::calculate(StatementBlock& statementBlock) {return nullptr;}
-Variable* TextLiteral::calculate(StatementBlock& statementBlock) {return nullptr;}
-Variable* IntegerLiteral::calculate(StatementBlock& statementBlock) {return nullptr;}
-Variable* DecimalLiteral::calculate(StatementBlock& statementBlock) {return nullptr;}
-Variable* Hexgrid::calculate(StatementBlock& statementBlock) {return nullptr;}
-Variable* HexgridCell::calculate(StatementBlock& statementBlock) {return nullptr;}
-Variable* Identifier::calculate(StatementBlock& statementBlock) {return nullptr;}
-Variable* Array::calculate(StatementBlock& statementBlock) {return nullptr;}
- */

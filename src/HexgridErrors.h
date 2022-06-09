@@ -99,6 +99,41 @@ namespace hexgrid_errors
         }
     };
 
+    class VariableIsNotDeclared : public HexgriderException{
+        public:
+        VariableIsNotDeclared(/* std::pair<int, int> start,  */std::string var_name){
+            std::stringstream ssmsg;
+            ssmsg << /* pos_text(start) <<  */" Reference to undefined variable: " << var_name << "\n";
+            msg = ssmsg.str();
+        }
+    };
+
+    class AssingingWrongVariableType : public HexgriderException{
+        public:
+        AssingingWrongVariableType(std::string expected_type, std::string given_type){
+            std::stringstream ssmsg;
+            ssmsg << " recieved " << given_type << ", expected " << expected_type << "\n";
+            msg = ssmsg.str();
+        }
+    };
+
+    class GettingWrongVariableType : public HexgriderException{
+        public:
+        GettingWrongVariableType(std::string expected_type, std::string given_type){
+            std::stringstream ssmsg;
+            ssmsg << " recieved " << given_type << ", expected " << expected_type << "\n";
+            msg = ssmsg.str();
+        }
+    };
+
+    class OperationsNotAvailabledForTypes : public HexgriderException{
+        public:
+        OperationsNotAvailabledForTypes(std::string op, std::string type1, std::string type2){
+            std::stringstream ssmsg;
+            ssmsg << " Cannot perform operation " << op << " on types " << type1 << " and " << type2 << '\n';
+        }
+    };
+
 } //namespace hexgrid_erorrs
 
 #endif //TKOM_HEXGRID_ERRORS_H

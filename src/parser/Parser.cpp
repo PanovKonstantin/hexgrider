@@ -1,5 +1,4 @@
 #include "Parser.h"
-#include <ast/Ast.h>
 using namespace parser;
 using namespace lexer;
 using namespace token;
@@ -50,8 +49,7 @@ unique_ptr<Node> Parser::readDeclrOrInit()
     auto expr = readExpression();
     if(!expr) throwOnUnexpectedInput("a variable or a value");
     return make_unique<InitializationStatement>(
-        declr->type, declr->identifier,
-        move(expr), declr->dimension);
+        declr->type, declr->identifier, move(expr));
 }
 
 unique_ptr<Node> Parser::readFuncCallOrAssignment()
@@ -66,29 +64,30 @@ unique_ptr<Node> Parser::readFuncCallOrAssignment()
     return functionCall;
 }
 
-unique_ptr<Node> Parser::readAssignment(string id)
+unique_ptr<Node> Parser::readAssignment(string name)
 {
     if(!consumeIfCheck(Token::Type::AssignOperator)) return nullptr;
     auto expr = readExpression();
     if (!expr) throwOnUnexpectedInput("a variable or a value");
-    return make_unique<AssignmentStatement>(id, move(expr));
+    return make_unique<AssignmentStatement>(name, move(expr));
 }
 
 unique_ptr<VariableDeclarationStatement> Parser::readDeclr()
 {
+/*     if(consumeIfCheck(Token::Type::IntType)){
+        requireToken(Token::Type::Identifier);
+        const auto name = current_token.getText();
+        advance();
+        return make_unique<IntVarDeclaration>(name)
+    } */
+
     if(!isVarType()) return nullptr;
     auto varType = getVarType();
     advance();
-    int dimension = 0;
-    while(consumeIfCheck(Token::Type::LeftBracket))
-    {
-        consume(Token::Type::RightBracket);
-        dimension++;
-    }
     requireToken(Token::Type::Identifier);
     const auto identifier = current_token.getText();
     advance();
-    return make_unique<VariableDeclarationStatement>(varType, identifier, dimension);
+    return make_unique<VariableDeclarationStatement>(varType, identifier);
 }
 
 unique_ptr<Node> Parser::readIfStatement()
@@ -169,7 +168,6 @@ unique_ptr<Node> Parser::readReturnStatement()
 {
     if(!consumeIfCheck(Token::Type::ReturnKeyword)) return nullptr;
     auto expr = readExpression();
-    if(!expr) throwOnUnexpectedInput("a value or a variable");
     return make_unique<ReturnStatement>(move(expr));
 }
 
@@ -179,7 +177,7 @@ unique_ptr<Node> Parser::readAddStatement()
     auto being_added = readExpression();
     if(!being_added) throwOnUnexpectedInput("a value or a variable");
     consume(Token::Type::ToKeyword);
-    auto added_to = readExpression();
+    auto added_to = readVariableReference();
     if(!added_to) throwOnUnexpectedInput("a variable");
     consume(Token::Type::AtKeyword);
     auto added_at = readExpression();
@@ -195,10 +193,10 @@ unique_ptr<Node> Parser::readRemoveStatement()
     auto pos = readExpression();
     if(!pos) throwOnUnexpectedInput("a value or a variable");
     consume(Token::Type::FromKeyword);
-    auto grid = readExpression();
+    auto grid = readVariableReference();
     if(!grid) throwOnUnexpectedInput("a variable");
     return make_unique<RemoveStatement>(move(pos),
-                                             move(grid));
+                                        move(grid));
 }
 
 unique_ptr<Node> Parser::readMoveStatement()
@@ -207,10 +205,10 @@ unique_ptr<Node> Parser::readMoveStatement()
     auto pos1 = readExpression();
     if(!pos1) throwOnUnexpectedInput("a value or a variable");
     consume(Token::Type::FromKeyword);
-    auto grid1 = readExpression();
+    auto grid1 = readVariableReference();
     if(!grid1) throwOnUnexpectedInput("a variable");
     consume(Token::Type::ToKeyword);
-    auto grid2 = readExpression();
+    auto grid2 = readVariableReference();
     if(!grid2) throwOnUnexpectedInput("a variable");
     consume(Token::Type::AtKeyword);
     auto pos2 = readExpression();
@@ -478,6 +476,13 @@ unique_ptr<Node> Parser::readIntegerLiteral()
     return literal;
 }
 
+unique_ptr<VariableReference> Parser::readVariableReference(){
+    if(!checkToken(Token::Type::Identifier)) return nullptr;
+    const auto id = current_token.getText();
+    advance();
+    return make_unique<VariableReference>(id);
+}
+
 unique_ptr<Node> Parser::readVariableOrFuncCall()
 {
     if(!checkToken(Token::Type::Identifier)) return nullptr;
@@ -537,7 +542,7 @@ unique_ptr<Node> Parser::readArray()
     if(!consumeIfCheck(Token::Type::LeftBracket)) return nullptr;
     auto elements = readElementList();
     consume(Token::Type::RightBracket);
-    return make_unique<Array>(move(elements));
+    return make_unique<ArrayLiteral>(move(elements));
 }
 
 unique_ptr<Node> Parser::readHexgrid()
@@ -545,7 +550,7 @@ unique_ptr<Node> Parser::readHexgrid()
     if(!consumeIfCheck(Token::Type::LessOperator)) return nullptr;
     auto cells = readHexgridCellList();
     consume(Token::Type::GreaterOperator);
-    return make_unique<Hexgrid>(move(cells));
+    return make_unique<HexgridLiteral>(move(cells));
 }
 
 

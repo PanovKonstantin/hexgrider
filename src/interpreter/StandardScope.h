@@ -1,8 +1,8 @@
 #ifndef TKOM_STANDARD_SCOPE_H
 #define TKOM_STANDARD_SCOPE_H
-#include "Ast.h"
+#include <parser/Ast.h>
 
-namespace ast{
+namespace intprt{
     
 ast::StatementBlock standard_scope = ast::StatementBlock({});
 }

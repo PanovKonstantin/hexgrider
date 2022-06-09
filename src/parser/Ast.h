@@ -12,12 +12,93 @@
 namespace ast
 {
 
-class Node;
+class Program;
+class ReturnStatement;
+class RemoveStatement;
+class MoveStatement;
+class IfStatement;
+class ForeachStatement;
+class ConditionBlock;
+class AddStatement;
+class InitializationStatement;
+class AssignmentStatement;
+class IndexingExpression;
+class ArithmeticalNegation;
+class LogicalNegation;
+class ModuloExpression;
+class DivideExpression;
+class MultiplyExpression;
+class SubtructExpression;
+class AddExpression;
+class OnExpression;
+class ByExpression;
+class BesideExpression;
+class NotEqualExpression;
+class EqualExpression;
+class GreaterOrEqualExpression;
+class GreaterExpression;
+class LessOrEqualExpression;
+class LessExpression;
+class AndExpression;
+class OrExpression;
+class ArrayLiteral;
+class HexgridCell;
+class HexgridLiteral;
+class DecimalLiteral;
+class IntegerLiteral;
+class TextLiteral;
+class VariableReference;
+class FunctionCall;
+class StatementBlock;
+class FunctionDefinition;
+class VariableDeclarationStatement;
+// class IntVarDeclaration;
 
 class AstVisitor
 {
 public:
-    virtual void visit(Node&) {throw std::runtime_error("visit is not implemented");}
+virtual ~AstVisitor() = default;
+virtual void visit(ast::Program&) = 0;
+virtual void visit(ast::VariableDeclarationStatement&) = 0;
+// virtual void visit(ast::IntVarDeclaration&) = 0;
+virtual void visit(ast::ReturnStatement&) = 0;
+virtual void visit(ast::RemoveStatement&) = 0;
+virtual void visit(ast::MoveStatement&) = 0;
+virtual void visit(ast::IfStatement&) = 0;
+virtual void visit(ast::ForeachStatement&) = 0;
+virtual void visit(ast::ConditionBlock&) = 0;
+virtual void visit(ast::AddStatement&) = 0;
+virtual void visit(ast::InitializationStatement&) = 0;
+virtual void visit(ast::AssignmentStatement&) = 0;
+virtual void visit(ast::IndexingExpression&) = 0;
+virtual void visit(ast::ArithmeticalNegation&) = 0;
+virtual void visit(ast::LogicalNegation&) = 0;
+virtual void visit(ast::ModuloExpression&) = 0;
+virtual void visit(ast::DivideExpression&) = 0;
+virtual void visit(ast::MultiplyExpression&) = 0;
+virtual void visit(ast::SubtructExpression&) = 0;
+virtual void visit(ast::AddExpression&) = 0;
+virtual void visit(ast::OnExpression&) = 0;
+virtual void visit(ast::ByExpression&) = 0;
+virtual void visit(ast::BesideExpression&) = 0;
+virtual void visit(ast::NotEqualExpression&) = 0;
+virtual void visit(ast::EqualExpression&) = 0;
+virtual void visit(ast::GreaterOrEqualExpression&) = 0;
+virtual void visit(ast::GreaterExpression&) = 0;
+virtual void visit(ast::LessOrEqualExpression&) = 0;
+virtual void visit(ast::LessExpression&) = 0;
+virtual void visit(ast::AndExpression&) = 0;
+virtual void visit(ast::OrExpression&) = 0;
+virtual void visit(ast::ArrayLiteral&) = 0;
+virtual void visit(ast::HexgridCell&) = 0;
+virtual void visit(ast::HexgridLiteral&) = 0;
+virtual void visit(ast::DecimalLiteral&) = 0;
+virtual void visit(ast::IntegerLiteral&) = 0;
+virtual void visit(ast::TextLiteral&) = 0;
+virtual void visit(ast::VariableReference&) = 0;
+virtual void visit(ast::FunctionCall&) = 0;
+virtual void visit(ast::StatementBlock&) = 0;
+virtual void visit(ast::FunctionDefinition&) = 0;
 };
 
 
@@ -26,8 +107,8 @@ class Node
 public:
     virtual ~Node();
     virtual std::string toString(int depth = 0) const = 0;
-    virtual void accept(AstVisitor& v) {throw std::runtime_error("accept not implemented");}
-    // virtual Variable* calculate(StatementBlock&) = 0;
+    // virtual void accept(AstVisitor& v) {throw std::runtime_error("accept not implemented");}
+    virtual void accept(AstVisitor&) = 0;
 };
 
 class Variable
@@ -43,23 +124,27 @@ public:
     };
     Variable();
     Variable(Type);
-    Variable(Type, int);
     static std::string typeToString(Type);
     std::string typeToString();
-    int getIntValue(std::string);
-    // double getDoubleValue(std::string);
-    // std::string getStringValue(std::string);
 private:
     Type type;
-    std::variant<int, double, std::string> value;
-
 };
 
+
+/* class IntVarDeclaration : public Node{
+public: 
+    IntVarDeclaration(std::string);
+    ~IntVarDeclaration(){};
+    std::string toString(int=0) const override;
+private:
+    virtual void accept(AstVisitor& v) override {v.visit(*this);}
+    std::string name;
+}; */
 
 class VariableDeclarationStatement : public Node
 {
 public:
-    VariableDeclarationStatement(Variable::Type type_, std::string id_, int dimenstion_=0);
+    VariableDeclarationStatement(Variable::Type type_, std::string id_);
     ~VariableDeclarationStatement(){};
 
     std::string toString(int depth = 0) const override;
@@ -67,11 +152,10 @@ public:
     std::string toString(Variable::Type type_) const;
     // std::string getIdentifier();
 
-    // Variable* calculate(StatementBlock&) override;
+    virtual void accept(AstVisitor& v) override {v.visit(*this);}
 
     Variable::Type type;
     std::string identifier;
-    int dimension;
 };
 
 class FunctionDefinition : public Node
@@ -86,14 +170,20 @@ public:
     ~FunctionDefinition(){};
 
     std::string toString(int depth = 0) const override;
-    
+    std::string getName() const;
+    std::pair<int, int> getStart()const ;
+    std::pair<int, int> getEnd()const;
+    virtual void accept(AstVisitor& v) override {v.visit(*this);}
+    size_t getParamCount() const;
+    void declareParam(int, AstVisitor&);
+    void runStatementBlock(AstVisitor&);
+private:
     Variable::Type type;
     std::string name;
     std::vector<std::unique_ptr<VariableDeclarationStatement>> params;
     std::unique_ptr<Node> statementBlock;
     std::pair<int, int> startLoc;
     std::pair<int, int> endLoc;
-    // Variable* calculate(StatementBlock&) override;
 };
 
 class Program : public Node
@@ -119,15 +209,7 @@ public:
 
     std::string toString(int depth = 0) const override;
     std::vector<std::unique_ptr<Node>> stmnts;
-    // std::vector<std::unique_ptr<FunctionDefinition> funcDefs;
-    // std::vector<std::unique_ptr<Vara> funcDefs;
-    // std::vector<std::unique_ptr<Node>> stmnts;
-    // std::map<std::string, Variable> variables;
-    // std::map<std::string, Node> functions;
-    // Variable* calculate(StatementBlock&) override;
-
-    // void declareVariable(std::string name, Variable var);
-    // void assignVariable(std::string name, Variable var);
+    virtual void accept(AstVisitor& v) override {v.visit(*this);}
 };
 
 class FunctionCall : public Node
@@ -140,7 +222,7 @@ public:
 
     std::string funcName;
     std::vector<std::unique_ptr<Node>> args;
-    // Variable* calculate(StatementBlock&) override;
+    virtual void accept(AstVisitor& v) override {v.visit(*this);}
 };
 
 
@@ -151,21 +233,10 @@ public:
     ~VariableReference(){};
 
     std::string toString(int depth = 0) const override;
-    std::string getValue();
-    // VariableReference* calculate(StatementBlock&) override;
+    std::string getName() const;
+    virtual void accept(AstVisitor& v) override {v.visit(*this);}
 private:
     std::string name;
-};
-
-
-
-class Literal : public Node
-{
-public:
-    Literal();
-    ~Literal(){};
-    std::string toString(int depth = 0) const override;
-    // Variable* calculate(StatementBlock&) override;
 };
 
 
@@ -176,8 +247,10 @@ public:
     ~TextLiteral(){};
 
     std::string toString(int depth = 0) const override;
+    virtual void accept(AstVisitor& v) override {v.visit(*this);}
+    std::string getValue() const;
+private:
     std::string value;
-    // Variable* calculate(StatementBlock&) override;
 };
 
 
@@ -188,8 +261,11 @@ public:
     ~IntegerLiteral(){};
 
     std::string toString(int depth = 0) const override;
+    virtual void accept(AstVisitor& v) override {v.visit(*this);}
+    int getValue() const ;
+
+private:
     int value;
-    // Variable* calculate(StatementBlock&) override;
 };
 
 
@@ -200,21 +276,21 @@ public:
     ~DecimalLiteral(){};
     std::string toString(int depth = 0) const override;
     double getValue() const;
-    // Variable* calculate(StatementBlock&) override;
+    virtual void accept(AstVisitor& v) override {v.visit(*this);}
 private:
     double value;
 };
 
 
-class Hexgrid : public Node
+class HexgridLiteral : public Node
 {
 public:
-    Hexgrid(std::vector<std::unique_ptr<Node>> cells_);
-    ~Hexgrid(){};
+    HexgridLiteral(std::vector<std::unique_ptr<Node>> cells_);
+    ~HexgridLiteral(){};
 
     std::string toString(int depth = 0) const override;
     std::vector<std::unique_ptr<Node>> cells;
-    // Variable* calculate(StatementBlock&) override;
+    virtual void accept(AstVisitor& v) override {v.visit(*this);}
 };
 
 
@@ -228,19 +304,19 @@ public:
     std::string toString(int depth = 0) const override;
     std::unique_ptr<Node> pos;
     std::unique_ptr<Node> value;
-    // Variable* calculate(StatementBlock&) override;
+    virtual void accept(AstVisitor& v) override {v.visit(*this);}
 };
 
 
-class Array : public Node
+class ArrayLiteral : public Node
 {
 public:
-    Array(std::vector<std::unique_ptr<Node>> elements_);
-    ~Array(){};
+    ArrayLiteral(std::vector<std::unique_ptr<Node>> elements_);
+    ~ArrayLiteral(){};
 
     std::string toString(int depth = 0) const override;
     std::vector<std::unique_ptr<Node>> elements;
-    // Variable* calculate(StatementBlock&) override;
+    virtual void accept(AstVisitor& v) override {v.visit(*this);}
 };
 
 /*------------------------------*/
@@ -263,7 +339,7 @@ class OrExpression : public BinaryExpression
 public:
     using BinaryExpression::BinaryExpression;
     std::string toString(int depth = 0) const override;
-    // Variable* calculate(StatementBlock&) override;
+    virtual void accept(AstVisitor& v) override {v.visit(*this);}
 };
 
 
@@ -272,7 +348,7 @@ class AndExpression : public BinaryExpression
 public:
     using BinaryExpression::BinaryExpression;
     std::string toString(int depth = 0) const override;
-    // Variable* calculate(StatementBlock&) override;
+    virtual void accept(AstVisitor& v) override {v.visit(*this);}
 };
 
 class LessExpression : public BinaryExpression
@@ -280,7 +356,7 @@ class LessExpression : public BinaryExpression
 public:
     using BinaryExpression::BinaryExpression;
     std::string toString(int depth = 0) const override;
-    // Variable* calculate(StatementBlock&) override;
+    virtual void accept(AstVisitor& v) override {v.visit(*this);}
 };
 
 class LessOrEqualExpression : public BinaryExpression
@@ -288,7 +364,7 @@ class LessOrEqualExpression : public BinaryExpression
 public:
     using BinaryExpression::BinaryExpression;
     std::string toString(int depth = 0) const override;
-    // Variable* calculate(StatementBlock&) override;
+    virtual void accept(AstVisitor& v) override {v.visit(*this);}
 };
 
 class GreaterExpression : public BinaryExpression
@@ -296,7 +372,7 @@ class GreaterExpression : public BinaryExpression
 public:
     using BinaryExpression::BinaryExpression;
     std::string toString(int depth = 0) const override;
-    // Variable* calculate(StatementBlock&) override;
+    virtual void accept(AstVisitor& v) override {v.visit(*this);}
 };
 
 class GreaterOrEqualExpression : public BinaryExpression
@@ -304,7 +380,7 @@ class GreaterOrEqualExpression : public BinaryExpression
 public:
     using BinaryExpression::BinaryExpression;
     std::string toString(int depth = 0) const override;
-    // Variable* calculate(StatementBlock&) override;
+    virtual void accept(AstVisitor& v) override {v.visit(*this);}
 };
 
 class EqualExpression : public BinaryExpression
@@ -312,7 +388,7 @@ class EqualExpression : public BinaryExpression
 public:
     using BinaryExpression::BinaryExpression;
     std::string toString(int depth = 0) const override;
-    // Variable* calculate(StatementBlock&) override;
+    virtual void accept(AstVisitor& v) override {v.visit(*this);}
 };
 
 class NotEqualExpression : public BinaryExpression
@@ -320,7 +396,7 @@ class NotEqualExpression : public BinaryExpression
 public:
     using BinaryExpression::BinaryExpression;
     std::string toString(int depth = 0) const override;
-    // Variable* calculate(StatementBlock&) override;
+    virtual void accept(AstVisitor& v) override {v.visit(*this);}
 };
 
 class BesideExpression : public BinaryExpression
@@ -328,7 +404,7 @@ class BesideExpression : public BinaryExpression
 public:
     using BinaryExpression::BinaryExpression;
     std::string toString(int depth = 0) const override;
-    // Variable* calculate(StatementBlock&) override;
+    virtual void accept(AstVisitor& v) override {v.visit(*this);}
 };
 
 class ByExpression : public BinaryExpression
@@ -337,7 +413,7 @@ public:
 
     using BinaryExpression::BinaryExpression;
     std::string toString(int depth = 0) const override;
-    // Variable* calculate(StatementBlock&) override;
+    virtual void accept(AstVisitor& v) override {v.visit(*this);}
 };
 
 class OnExpression : public BinaryExpression
@@ -345,7 +421,7 @@ class OnExpression : public BinaryExpression
 public:
     using BinaryExpression::BinaryExpression;
     std::string toString(int depth = 0) const override;
-    // Variable* calculate(StatementBlock&) override;
+    virtual void accept(AstVisitor& v) override {v.visit(*this);}
 };
 
 class AddExpression : public BinaryExpression
@@ -353,7 +429,7 @@ class AddExpression : public BinaryExpression
 public:
     using BinaryExpression::BinaryExpression;
     std::string toString(int depth = 0) const override;
-    // Variable* calculate(StatementBlock&) override;
+    virtual void accept(AstVisitor& v) override {v.visit(*this);}
 };
 
 class SubtructExpression : public BinaryExpression
@@ -361,7 +437,7 @@ class SubtructExpression : public BinaryExpression
 public:
     using BinaryExpression::BinaryExpression;
     std::string toString(int depth = 0) const override;
-    // Variable* calculate(StatementBlock&) override;
+    virtual void accept(AstVisitor& v) override {v.visit(*this);}
 };
 
 class MultiplyExpression : public BinaryExpression
@@ -369,7 +445,7 @@ class MultiplyExpression : public BinaryExpression
 public:
     using BinaryExpression::BinaryExpression;
     std::string toString(int depth = 0) const override;
-    // Variable* calculate(StatementBlock&) override;
+    virtual void accept(AstVisitor& v) override {v.visit(*this);}
 };
 
 class DivideExpression : public BinaryExpression
@@ -377,7 +453,7 @@ class DivideExpression : public BinaryExpression
 public:
     using BinaryExpression::BinaryExpression;
     std::string toString(int depth = 0) const override;
-    // Variable* calculate(StatementBlock&) override;
+    virtual void accept(AstVisitor& v) override {v.visit(*this);}
 };
 
 class ModuloExpression : public BinaryExpression
@@ -385,7 +461,7 @@ class ModuloExpression : public BinaryExpression
 public:
     using BinaryExpression::BinaryExpression;
     std::string toString(int depth = 0) const override;
-    // Variable* calculate(StatementBlock&) override;
+    virtual void accept(AstVisitor& v) override {v.visit(*this);}
 };
 
 class LogicalNegation : public Node
@@ -395,7 +471,7 @@ public:
     ~LogicalNegation(){};
 
     std::string toString(int depth = 0) const override;
-    // Variable* calculate(StatementBlock&) override;
+    virtual void accept(AstVisitor& v) override {v.visit(*this);}
     std::unique_ptr<Node> value;
 };
 
@@ -408,7 +484,7 @@ public:
 
     std::string toString(int depth = 0) const override;
     std::unique_ptr<Node> value;
-    // Variable* calculate(StatementBlock&) override;
+    virtual void accept(AstVisitor& v) override {v.visit(*this);}
 };
 
 
@@ -423,7 +499,7 @@ public:
 
     std::unique_ptr<Node> indexOn;
     std::unique_ptr<Node> indexBy;
-    // Variable* calculate(StatementBlock&) override;
+    virtual void accept(AstVisitor& v) override {v.visit(*this);}
 };
 
 /*---------------------------------------*/
@@ -434,33 +510,31 @@ public:
 class AssignmentStatement : public Node
 {
 public:
-    AssignmentStatement(std::string iden_, 
+    AssignmentStatement(std::string name_, 
                         std::unique_ptr<Node> value_);
     ~AssignmentStatement(){};
 
     std::string toString(int depth = 0) const override;
 
-    std::string iden;
+    std::string name;
     std::unique_ptr<Node> value;
-    // Variable* calculate(StatementBlock&) override;
+    virtual void accept(AstVisitor& v) override {v.visit(*this);}
 };
 
 
 class InitializationStatement : public Node
 {
 public:
-    InitializationStatement(Variable::Type, std::string, std::unique_ptr<Node>, int);
+    InitializationStatement(Variable::Type, std::string, std::unique_ptr<Node>);
     ~InitializationStatement(){};
 
     std::string toString(int depth = 0) const override;
-    std::string toString(Variable::Type) const;
     std::string getType() const;
 
     Variable::Type type;
     std::string name;
     std::unique_ptr<Node> value;
-    int dimension;
-    // Variable* calculate(StatementBlock&) override;
+    virtual void accept(AstVisitor& v) override {v.visit(*this);}
 };
 
 class AddStatement : public Node
@@ -468,15 +542,15 @@ class AddStatement : public Node
 public:
     AddStatement( 
                 std::unique_ptr<Node> being_added_,
-                std::unique_ptr<Node> added_to_,
+                std::unique_ptr<VariableReference> added_to_,
                 std::unique_ptr<Node> added_at_);
     ~AddStatement(){};
 
     std::string toString(int depth = 0) const override;
     std::unique_ptr<Node> being_added;
-    std::unique_ptr<Node> added_to;
+    std::unique_ptr<VariableReference> added_to;
     std::unique_ptr<Node> added_at;
-    // Variable* calculate(StatementBlock&) override;
+    virtual void accept(AstVisitor& v) override {v.visit(*this);}
 };
 
 
@@ -489,7 +563,7 @@ public:
     std::string toString(int depth = 0) const override;
     std::unique_ptr<Node> condition;
     std::unique_ptr<Node> statementBlock;
-    // Variable* calculate(StatementBlock&) override;
+    virtual void accept(AstVisitor& v) override {v.visit(*this);}
 };
 
 
@@ -506,23 +580,23 @@ public:
     std::unique_ptr<Node> iterator;
     std::unique_ptr<Node> iterated;
     std::unique_ptr<Node> statementBlock;
-    // Variable* calculate(StatementBlock&) override;
+    virtual void accept(AstVisitor& v) override {v.visit(*this);}
 };
 
 class IfStatement : public Node
 {
 public:
     IfStatement( 
-                std::unique_ptr<Node> if_block_,
-                std::vector<std::unique_ptr<Node>> elif_blocks_,
-                std::unique_ptr<Node> else_block_);
+                std::unique_ptr<Node> ifBlock_,
+                std::vector<std::unique_ptr<Node>> elifBlocks_,
+                std::unique_ptr<Node> elseBlock_);
     ~IfStatement(){};
 
     std::string toString(int depth = 0) const override;
-    std::unique_ptr<Node> if_block;
-    std::unique_ptr<Node> else_block;
-    std::vector<std::unique_ptr<Node>> elif_blocks;
-    // Variable* calculate(StatementBlock&) override;
+    std::unique_ptr<Node> ifBlock;
+    std::unique_ptr<Node> elseBlock;
+    std::vector<std::unique_ptr<Node>> elifBlocks;
+    virtual void accept(AstVisitor& v) override {v.visit(*this);}
 };
 
 
@@ -530,17 +604,17 @@ class MoveStatement : public Node
 {
 public:
     MoveStatement(std::unique_ptr<Node> position_source_,
-                  std::unique_ptr<Node> grid_source_,
-                  std::unique_ptr<Node> grid_target_,
+                  std::unique_ptr<VariableReference> grid_source_,
+                  std::unique_ptr<VariableReference> grid_target_,
                   std::unique_ptr<Node> position_target_);
     ~MoveStatement(){};
 
     std::string toString(int depth = 0) const override;
     std::unique_ptr<Node> position_source;
     std::unique_ptr<Node> position_target;
-    std::unique_ptr<Node> grid_source;
-    std::unique_ptr<Node> grid_target;
-    // Variable* calculate(StatementBlock&) override;
+    std::unique_ptr<VariableReference> grid_source;
+    std::unique_ptr<VariableReference> grid_target;
+    virtual void accept(AstVisitor& v) override {v.visit(*this);}
 };
 
 
@@ -548,13 +622,13 @@ class RemoveStatement : public Node
 {
 public:
     RemoveStatement(std::unique_ptr<Node> position_,
-                    std::unique_ptr<Node> grid_);
+                    std::unique_ptr<VariableReference> grid_);
     ~RemoveStatement(){};
 
     std::string toString(int depth = 0) const override;
     std::unique_ptr<Node> position;
-    std::unique_ptr<Node> grid;
-    // Variable* calculate(StatementBlock&) override;
+    std::unique_ptr<VariableReference> grid;
+    virtual void accept(AstVisitor& v) override {v.visit(*this);}
 };
 
 
@@ -566,7 +640,7 @@ public:
 
     std::string toString(int depth = 0) const override;
     std::unique_ptr<Node> expr;
-    // Variable* calculate(StatementBlock&) override;
+    void accept(AstVisitor& v) override {v.visit(*this);}
 };
 } // namespace ast
 

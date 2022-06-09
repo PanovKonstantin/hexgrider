@@ -65,8 +65,8 @@ def create_env(opts):
     env = Environment(variables = opts)
     """ , CXX='clang++' """
     Export('env')
-    # env.Append(CCFLAGS=['-Wall', '-Wextra', ])
-    # '-Wpedantic', '-Werror'
+    env.Append(CCFLAGS=['-Wall', '-Wextra', '-Wpedantic', '-Werror'])
+    # 
     env.Append(CCFLAGS=['--std=c++17'])
 
     if env['debug']:

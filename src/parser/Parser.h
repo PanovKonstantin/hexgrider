@@ -9,8 +9,8 @@
 #include <istream>
 #include <lexer/Token.h>
 #include <lexer/Lexer.h>
-#include <ast/Ast.h>
 #include <HexgridErrors.h>
+#include "Ast.h"
 
 
 namespace parser
@@ -64,6 +64,7 @@ protected:
     std::unique_ptr<ast::Node> readTextLiteral();
     std::unique_ptr<ast::Node> readDecimalLiteral();
     std::unique_ptr<ast::Node> readIntegerLiteral();
+    std::unique_ptr<ast::VariableReference> readVariableReference();
     std::unique_ptr<ast::Node> readVariableOrFuncCall();
     std::unique_ptr<ast::Node> readFunctionCall(std::string);
     std::unique_ptr<ast::Node> readArray();

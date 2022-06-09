@@ -15,7 +15,7 @@ namespace lexer
 class Lexer
 {
 public:
-    Lexer(std::istream& in);
+    Lexer(std::istream& in); 
     const Lexer& operator=(const Lexer&) = delete;
 
     token::Token getToken();
