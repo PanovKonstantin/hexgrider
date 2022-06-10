@@ -21,7 +21,6 @@ def fill_gcc_env_flags(env):
 
 def fill_cl_env_flags(env):
     env.Append(CCFLAGS=['/W4', '/WX', '/EHsc'])
-    env.Append(CCFLAGS=['--std=c++17'])
     env.Append(LINKFLAGS=['/SUBSYSTEM:CONSOLE'])
 
     if env['debug']:
@@ -66,6 +65,10 @@ def create_env(opts):
     env = Environment(variables = opts)
     Export('env')
     fill_env_flags(env)
+    if env['debug']:
+        env.Append(CCFLAGS=['-O0', '-g'])
+    else:
+        env.Append(CCFLAGS=['-O2'])
     add_special_methods(env)
     return env
 
@@ -79,8 +82,6 @@ def build_lib():
 def build_executable():
     p = SConscript('src/SConscript', variant_dir='build/', duplicate=0)
     env.Install('./', p)
-
-
 
 
 initial_scons_config()

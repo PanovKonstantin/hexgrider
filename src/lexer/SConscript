@@ -1,7 +1,6 @@
 # -*- python -*-
 Import('env')
-
-lexer_lib = env.StaticLibrary('lexer', Glob('*.cpp'))
+lexer_lib = env.StaticLibrary('lexer', [Glob('*.cpp')])
 Export('lexer_lib')
 
 tests = env.BoostTests(Glob("tests/*.cpp"), lexer_lib)

@@ -1,9 +1,0 @@
- # -*- python -*-
-Import('env')
-
-ast_lib = env.StaticLibrary('ast', Glob('*.cpp'))
-Export('ast_lib')
-
-tests = env.BoostTests(Glob("tests/*.cpp"), ast_lib)
-
-Return('ast_lib')

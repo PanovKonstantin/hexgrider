@@ -4,7 +4,7 @@
 
 ## Requirements
 
-- C++14 compatible compiler (g++ 4.9, MSVC 2014)
+- C++17 compatible compiler
 - Python + SCons
 - Boost Libraries (Unit Test Framework)
 
@@ -15,6 +15,6 @@ Type `scons` in project directory.
 
 ### Executing examples:
 
-`> ./tkom-calculator < example/example1`
-`> cat example/example1 | ./tkom-calculator`
+`> ./hexgrider < example/example1`
+`> cat example/example1 | ./hexgrider`
 `> ./run example/example1 `
