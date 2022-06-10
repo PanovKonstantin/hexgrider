@@ -13,4 +13,4 @@ foreach array pos in example_hexgrid beside [0, 0, 0]
         blue_count = blue_count + 1;
     }
 }
-int out = blue_count;
+return blue_count;

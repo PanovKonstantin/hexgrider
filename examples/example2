@@ -9,4 +9,4 @@ foreach array pos in example_hexgrid by "blue"
 {
     if (pos[0] > 0) {remove pos from example_hexgrid;}
 }
-hexgrid out = example_hexgrid;
+return example_hexgrid;

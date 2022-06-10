@@ -74,13 +74,6 @@ unique_ptr<Node> Parser::readAssignment(string name)
 
 unique_ptr<VariableDeclarationStatement> Parser::readDeclr()
 {
-/*     if(consumeIfCheck(Token::Type::IntType)){
-        requireToken(Token::Type::Identifier);
-        const auto name = current_token.getText();
-        advance();
-        return make_unique<IntVarDeclaration>(name)
-    } */
-
     if(!isVarType()) return nullptr;
     auto varType = getVarType();
     advance();
@@ -205,16 +198,20 @@ unique_ptr<Node> Parser::readMoveStatement()
     auto pos1 = readExpression();
     if(!pos1) throwOnUnexpectedInput("a value or a variable");
     consume(Token::Type::FromKeyword);
-    auto grid1 = readVariableReference();
-    if(!grid1) throwOnUnexpectedInput("a variable");
+    auto source = readVariableReference();
+    if(!source) throwOnUnexpectedInput("a variable");
     consume(Token::Type::ToKeyword);
-    auto grid2 = readVariableReference();
-    if(!grid2) throwOnUnexpectedInput("a variable");
-    consume(Token::Type::AtKeyword);
-    auto pos2 = readExpression();
-    if(!pos2) throwOnUnexpectedInput("a value or a variable");
+    auto target = readVariableReference();
+    if(!target) throwOnUnexpectedInput("a variable");
+    if(consumeIfCheck(Token::Type::AtKeyword)){
+        auto pos2 = readExpression();
+        if(!pos2) throwOnUnexpectedInput("a value or a variable");
+        return make_unique<MoveStatement>(
+            move(pos1), move(source), move(target), move(pos2)
+        );
+    }
     return make_unique<MoveStatement>(
-        move(pos1), move(grid1), move(grid2), move(pos2)
+        move(pos1), move(source), move(target), nullptr
     );
 }
 

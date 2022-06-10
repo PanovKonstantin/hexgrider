@@ -3,7 +3,6 @@
 #include <parser/Ast.h>
 #include <lexer/Lexer.h>
 #include "interpreter/Interpreter.h"
-#include "interpreter/StandardScope.h"
 using namespace ast;
 using namespace lexer;
 using namespace parser;
@@ -13,7 +12,7 @@ using namespace intprt;
 
 struct InterpreterTestsFixture
 {
-    Interpreter interpreter = Interpreter(false);
+    Interpreter interpreter = Interpreter();
     void interpret_text(const std::string& str)
     {
         std::istringstream in(str);
@@ -427,6 +426,30 @@ BOOST_AUTO_TEST_CASE(interpreter_beside_expression)
     BOOST_CHECK_EQUAL(get<int>(pos2.get(2)), -1);
 }
 
+BOOST_AUTO_TEST_CASE(interpreter_beside_expression2)
+{
+    interpret_text("hexgrid example_hexgrid = "
+                    "<\"blue\"   at [0, 0, 0],"
+                    "\"red\"    at [0, -1, 1],"
+                    "\"blue\"   at [1, 0, -1],"
+                    "\"red\"    at [-1, 1, 0],"
+                    "\"yellow\" at [1, -1, 0],"
+                    "\"red\"    at [2, 0,-2],"
+                    "\"blue\"   at [-1, 0, 1]>;"
+                    "array pos1 = example_hexgrid beside [0, 0, 0];"
+                    "array pos2 = example_hexgrid by \"blue\";"
+                    "int count=0;"
+                    "foreach array pos in pos1{if(example_hexgrid on pos == \"blue\"){count=count+1;}}");
+    auto h = get<Hexgrid>(interpreter.getValue("example_hexgrid"));
+    BOOST_CHECK_EQUAL(h.size(), 7);
+    auto a = get<Array>(interpreter.getValue("pos1"));
+    BOOST_CHECK_EQUAL(a.size(), 5);
+    auto b = get<Array>(interpreter.getValue("pos2"));
+    BOOST_CHECK_EQUAL(b.size(), 3);
+    auto c = get<int>(interpreter.getValue("count"));
+    BOOST_CHECK_EQUAL(c, 2);
+}
+
 
 BOOST_AUTO_TEST_CASE(interpreter_if_statement)
 {
@@ -480,6 +503,15 @@ BOOST_AUTO_TEST_CASE(interpreter_foreach_statement_int)
     interpret_text( "int x = 0; array a = [1, 2, 3]; foreach int y in a { x = x + y; }");
     BOOST_CHECK_EQUAL(interpreter.containsVar("x"), true);
     BOOST_CHECK_EQUAL(get<int>(interpreter.getValue("x")), 6);
+}
+
+BOOST_AUTO_TEST_CASE(interpreter_foreach_hexgrid_statement_int)
+{
+    interpret_text( "hexgrid h = <2 at [0, 0, 0], \"dsa\" at [0, -2, 2], 4 at [4, -3, -1]>;"
+                    "int x = 0;"
+                    "foreach array y in h { x = x + 1; }");
+    BOOST_CHECK_EQUAL(interpreter.containsVar("x"), true);
+    BOOST_CHECK_EQUAL(get<int>(interpreter.getValue("x")), 3);
 }
 
 BOOST_AUTO_TEST_CASE(interpreter_foreach_statement_float)
@@ -568,6 +600,17 @@ BOOST_AUTO_TEST_CASE(interpreter_move_statement_hexgrid)
         auto b = get<Hexgrid>(interpreter.getValue("b"));
         auto test = b.on(2, 0, -2);
         BOOST_CHECK_EQUAL(get<string>(test), "test");
+        BOOST_CHECK_EXCEPTION(a.on(1, -1, 0), std::runtime_error,
+            interpreter_remove_statement_correct_msg);
+}
+BOOST_AUTO_TEST_CASE(interpreter_move_statement_string)
+{
+        interpret_text( "hexgrid a = <\"test\" at [1, -1, 0]>; \n"
+                        "string b; \n"
+                        "move [1, -1, 0] from a to b;");
+        auto a = get<Hexgrid>(interpreter.getValue("a"));
+        auto b = get<string>(interpreter.getValue("b"));
+        BOOST_CHECK_EQUAL(b, "test");
         BOOST_CHECK_EXCEPTION(a.on(1, -1, 0), std::runtime_error,
             interpreter_remove_statement_correct_msg);
 }

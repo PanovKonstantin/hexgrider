@@ -46,6 +46,7 @@ protected:
 
     std::unique_ptr<ast::Node> readCondition();
     std::unique_ptr<ast::Node> readStatementBlock();
+    std::unique_ptr<ast::Node> readFunctionStatementBlock();
 
     std::unique_ptr<ast::Node> readExpression();
     std::unique_ptr<ast::Node> readOrExpression();

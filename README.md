@@ -4,7 +4,7 @@
 
 ## Requirements
 
-- C++14 compatible compiler (g++ 4.9, MSVC 2014)
+- C++17 compatible compiler
 - Python + SCons
 - Boost Libraries (Unit Test Framework)
 

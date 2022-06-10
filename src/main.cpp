@@ -2,7 +2,6 @@
 #include <sstream>
 #include "lexer/Lexer.h"
 #include "parser/Ast.h"
-#include "interpreter/StandardScope.h"
 #include "parser/Parser.h"
 #include "HexgridErrors.h"
 #include "interpreter/Interpreter.h"

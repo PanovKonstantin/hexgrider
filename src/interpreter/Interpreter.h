@@ -34,12 +34,16 @@ class Hexgrid
 {
 public:
     Hexgrid();
-    Var on(int, int, int) ;
+    Var on(int, int, int);
+    Var on(std::tuple<int, int, int>);
     Var beside(int, int, int) ;
     Var by(Var);
-    void add(int, int, int, Var);
-    Var remove(int, int, int);
+    void add(Var, Var);
+    Var remove(Var);
     std::string toString()const;
+    std::tuple<int, int, int> arrayToTuple(Var);
+    std::vector<std::tuple<int, int, int>> getKeys();
+    int size();
 private:
     std::map<std::tuple<int, int, int>, Var> cells;
     std::vector<std::tuple<int, int, int>> directions = {
@@ -92,10 +96,9 @@ private:
     std::string lastDeclared;
     std::vector<Var> functionArgs;
     bool returning;
-    bool isOutput;
 
 public:
-    Interpreter(bool=true);
+    Interpreter();
     void declare(int, std::string);
     void assign(std::string);
     void assign(std::string, Var);

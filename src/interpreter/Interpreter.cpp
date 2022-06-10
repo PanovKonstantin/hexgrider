@@ -40,15 +40,28 @@ std::string Array::toString()const{
 
 Hexgrid::Hexgrid(){
 }
-Var Hexgrid::on(int q, int r, int s)  {
+
+tuple<int, int, int> Hexgrid::arrayToTuple(Var v){
+    auto arr = get<Array>(v);
+    auto q = get<int>(arr.get(0));
+    auto r = get<int>(arr.get(1));
+    auto s = get<int>(arr.get(2));
     if(q + r + s != 0) throw std::runtime_error("Incorrect hexgrid coordinate. sum must be equal 0.");
+    tuple<int, int, int> t(q, r, s);
+    return t;
+}
+
+Var Hexgrid::on(int q, int r, int s)  {
     tuple<int, int, int> key(q, r, s);
+    return on(key);
+}
+
+Var Hexgrid::on(tuple<int, int, int> key)  {
     if(!cells.count(key)) throw std::runtime_error("No such cell");
     return cells[key];
 }
-void Hexgrid::add(int q, int r, int s, Var value){
-    if(q + r + s != 0) throw std::runtime_error("Incorrect hexgrid coordinate. sum must be equal 0.");
-    tuple<int, int, int> key(q, r, s);
+void Hexgrid::add(Var arr, Var value){
+    auto key = arrayToTuple(arr);
     if(cells.count(key)) throw std::runtime_error("Cell is taken");
     cells[key] = value;
 }
@@ -92,13 +105,16 @@ Var Hexgrid::beside(int q, int r, int s){
     return returnArray;
 }
 
-Var Hexgrid::remove(int q, int r, int s){
-    tuple<int, int, int> pos(q, r, s);
+Var Hexgrid::remove(Var v){
+    auto pos = arrayToTuple(v);
     auto value = cells[pos];
     cells.erase(pos);
     return value;
 }
 
+int Hexgrid::size(){
+    return cells.size();
+}
 
 std::string Hexgrid::toString()const{
     string returnString="< ";
@@ -123,6 +139,13 @@ std::string Hexgrid::toString()const{
     return returnString + ">";
 }
 
+vector<tuple<int, int, int>> Hexgrid::getKeys(){
+    auto keys = vector<tuple<int, int, int>>();
+    for(auto const& [key, elem] : cells){
+        keys.push_back(key);
+    }
+    return keys;
+}
 
 void Scope::declare(int type, string name){
     uninitialized.insert(name);
@@ -187,7 +210,7 @@ size_t FunctionCallContext::getIndex(string name){
     return scopes[scope].getIndex(name);
 }
 
-Interpreter::Interpreter(bool isOutput_):isOutput(isOutput_)
+Interpreter::Interpreter()
 {
     contextStack.push_back(FunctionCallContext());
     returning=false;
@@ -262,16 +285,6 @@ void Interpreter::visit(Program& p){
     funcs.swap(p.funcs);
     for(auto const& stmnt: p.stmnts)
         stmnt->accept(*this);
-    if(isOutput){
-        std::visit(overload{
-            [](int& res)        {cout << res << '\n';},
-            [](double& res)     {cout << res << '\n';},
-            [](string& res)     {cout << res << '\n';},
-            [](Array& res)      {cout << res.toString() << '\n';},
-            [](Hexgrid& res)    {cout << res.toString() << '\n';},
-            [](auto&)    {},
-        }, result);
-    }
 }
 
 void Interpreter::visit(VariableDeclarationStatement& vds){
@@ -324,10 +337,7 @@ void Interpreter::visit(HexgridLiteral& hexLit){
     auto hex = Hexgrid();
     for(auto const& cell : hexLit.cells){
         cell->accept(*this);
-        int q = get<int>(get<Array>(result2).get(0));
-        int r = get<int>(get<Array>(result2).get(1));
-        int s = get<int>(get<Array>(result2).get(2));
-        hex.add(q, r, s, result);
+        hex.add(result2, result);
     }
     result = hex;
 }
@@ -567,9 +577,9 @@ void Interpreter::visit(OnExpression& expr){
     auto hexgrid = result;
     expr.rvalue->accept(*this);
     if(hexgrid.index()==5 && result.index()==4 && get<Array>(result).size()==3){
-        int q = get<int>(get<Array>(result2).get(0));
-        int r = get<int>(get<Array>(result2).get(1));
-        int s = get<int>(get<Array>(result2).get(2));
+        int q = get<int>(get<Array>(result).get(0));
+        int r = get<int>(get<Array>(result).get(1));
+        int s = get<int>(get<Array>(result).get(2));
         result = get<Hexgrid>(hexgrid).on(q, r, s);
     }
 }
@@ -631,18 +641,38 @@ void Interpreter::visit(StatementBlock& statementBlock){
 
 void Interpreter::visit(ForeachStatement& foreachStatement){
     foreachStatement.iterated->accept(*this);
-    if(result.index() != 4) throw std::runtime_error("Can only iterate array");
-    auto iterated = get<4>(result);
-    for(int i = 0; i<iterated.size(); i++){
-        pushScope();
-        auto elem = iterated.get(i);
-        foreachStatement.iterator->accept(*this);
-        if(getIndex(lastDeclared) == elem.index()){
-            assign(lastDeclared, elem);
-            foreachStatement.statementBlock->accept(*this);
+    if(result.index() == 4){
+        auto iterated = get<4>(result);
+        for(int i = 0; i<iterated.size(); i++){
+            pushScope();
+            auto elem = iterated.get(i);
+            foreachStatement.iterator->accept(*this);
+            if(getIndex(lastDeclared) == elem.index()){
+                assign(lastDeclared, elem);
+                foreachStatement.statementBlock->accept(*this);
+            }
+            popScope();
         }
-        popScope();
+    } else if(result.index() == 5){
+        auto iterated = get<5>(result);
+        auto keys = iterated.getKeys();
+        for(size_t i = 0; i<keys.size();i++){
+            pushScope();
+            auto arr = Array();
+            arr.add(get<0>(keys[i]));
+            arr.add(get<1>(keys[i]));
+            arr.add(get<2>(keys[i]));
+            Var elem = arr;
+            foreachStatement.iterator->accept(*this);
+            if(getIndex(lastDeclared) == elem.index()){
+                assign(lastDeclared, elem);
+                foreachStatement.statementBlock->accept(*this);
+            }
+            popScope();
+        }
     }
+    else  throw std::runtime_error("Can only iterate array or hexgrid");
+
 }
 
 void Interpreter::visit(FunctionDefinition& funcDef){
@@ -668,7 +698,18 @@ void Interpreter::visit(FunctionCall& funcCall){
 void Interpreter::visit(ReturnStatement& returnStatement){
     if(returnStatement.expr) returnStatement.expr->accept(*this);
     else result = {};
-    returning=true;
+    if(contextStack.size() == 1){
+        std::visit(overload{
+            [](int& res)        {cout << res << '\n';},
+            [](double& res)     {cout << res << '\n';},
+            [](string& res)     {cout << res << '\n';},
+            [](Array& res)      {cout << res.toString() << '\n';},
+            [](Hexgrid& res)    {cout << res.toString() << '\n';},
+            [](auto&)           {},
+        }, result);
+    } else {
+        returning=true;
+    }
 }
 
 bool Interpreter::isPosition(Var value){
@@ -686,11 +727,8 @@ void Interpreter::visit(AddStatement& addStatement){
     addStatement.added_at->accept(*this);
     if(!isPosition(result)) throw std::runtime_error("Position must be an array of 3 integers\n");
     auto pos = get<Array>(result);
-    int q = get<int>(pos.get(0));
-    int r = get<int>(pos.get(1));
-    int s = get<int>(pos.get(2));
     auto hexgrid = get<Hexgrid>(addedTo);
-    hexgrid.add(q, r, s, beingAdded);
+    hexgrid.add(pos, beingAdded);
     assign(addStatement.added_to->getName(), hexgrid);
 }
 
@@ -701,11 +739,8 @@ void Interpreter::visit(RemoveStatement& removeStatement){
     removeStatement.position->accept(*this);
     if(!isPosition(result)) throw std::runtime_error("Position must be an array of 3 integers\n");
     auto pos = get<Array>(result);
-    int q = get<int>(pos.get(0));
-    int r = get<int>(pos.get(1));
-    int s = get<int>(pos.get(2));
     auto hexgrid = get<Hexgrid>(grid);
-    hexgrid.remove(q, r, s);
+    hexgrid.remove(pos);
     assign(removeStatement.grid->getName(), hexgrid);
 }
 
@@ -715,32 +750,23 @@ void Interpreter::visit(MoveStatement& moveStatement){
     moveStatement.grid_target->accept(*this);
     auto grid_target = result;
     if(grid_source.index()!=5) throw std::runtime_error("Can only remove from hexgrid\n");
-    if(grid_target.index()!=5) throw std::runtime_error("Can only add to hexgrid\n");
     
     moveStatement.position_source->accept(*this);
-    auto position_source = result;
-    moveStatement.position_target->accept(*this);
-    auto position_target = result;
-
-    if(!isPosition(position_source)) throw std::runtime_error("Position must be an array of 3 integers\n");
-    if(!isPosition(position_target)) throw std::runtime_error("Position must be an array of 3 integers\n");
-    
-    auto position_source_arr = get<Array>(position_source);
-    int q = get<int>(position_source_arr.get(0));
-    int r = get<int>(position_source_arr.get(1));
-    int s = get<int>(position_source_arr.get(2));
-
+    if(!isPosition(result)) throw std::runtime_error("Position must be an array of 3 integers\n");
+    auto position_source_arr = get<Array>(result);
     auto hexgrid_source = get<Hexgrid>(grid_source);
-    auto value = hexgrid_source.remove(q, r, s);
-    assign(moveStatement.grid_source->getName(), hexgrid_source);
-
-    auto position_target_arr = get<Array>(position_target);
-    q = get<int>(position_target_arr.get(0));
-    r = get<int>(position_target_arr.get(1));
-    s = get<int>(position_target_arr.get(2));
-
-    auto hexgrid_target = get<Hexgrid>(grid_target);
-    hexgrid_target.add(q, r, s, value);
-    assign(moveStatement.grid_target->getName(), hexgrid_target);
+    auto value = hexgrid_source.remove(position_source_arr);
     
+    if(moveStatement.position_target){
+        if(grid_target.index()!=5) throw std::runtime_error("If moving at antoher position, targer must be hexgrid\n");
+        moveStatement.position_target->accept(*this);
+        auto position_target = result;
+        if(!isPosition(position_target)) throw std::runtime_error("Position must be an array of 3 integers\n");
+        auto position_target_arr = get<Array>(position_target);
+        auto hexgrid_target = get<Hexgrid>(grid_target);
+        hexgrid_target.add(position_target_arr, value);
+        value = hexgrid_target;
+    }
+    assign(moveStatement.grid_target->getName(), value);
+    assign(moveStatement.grid_source->getName(), hexgrid_source);
 }
